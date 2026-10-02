@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Energy and Carbon Explorer</title>
+<meta name="description" content="How AI uses energy and emits carbon, from power plant to data center to your desk. Interactive grid, model and workday simulators.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1EF;--card:#FFFFFF;--ink:#14201B;--ink2:#3A4843;--muted:#4A5752;
+  --line:#C9D1CD;--line2:#DDE3E0;--track:#E3E8E5;--teal:#0F766E;--teal-d:#0B5B50;
+  --mint:#7FD1C3;--gold:#F2C46B;--soft:#C9D6D1;--dline:#3A4A44;
+  --c-desk:#AEBBB5;--c-local:#D08A1A;--c-dc:#14201B;--c-emb:#8457B8;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:68px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace}
+.wrap{max-width:1320px;margin:0 auto;padding:0 24px}
+a{color:var(--teal)}a:hover{color:var(--teal-d)}
+p{margin:0}
+
+/* nav */
+nav.top{position:sticky;top:0;z-index:30;background:var(--ink);border-bottom:1px solid #2A3A34}
+nav.top .wrap{display:flex;align-items:center;gap:28px;min-height:56px;overflow-x:auto}
+nav.top .brand{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.1em;color:var(--mint);white-space:nowrap;margin-right:auto}
+nav.top a{color:var(--soft);text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap;padding:18px 0}
+nav.top a:hover{color:#fff}
+
+/* hero */
+.hero{background:var(--ink);color:var(--paper);padding:56px 0 64px}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:48px;align-items:end}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.12em;color:var(--mint);text-transform:uppercase}
+.hero h1{font-size:clamp(38px,6vw,70px);line-height:1.02;font-weight:800;letter-spacing:-.02em;margin:16px 0 20px}
+.hero .lede{font-size:19px;color:var(--soft);max-width:760px}
+.eq{border:1px solid var(--dline);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.eq .f{font-family:'IBM Plex Mono',monospace;font-size:20px;line-height:1.6}
+.hero-stats{display:flex;flex-wrap:wrap;gap:32px;margin-top:32px}
+.hero-stats div{display:flex;flex-direction:column}
+.hero-stats b{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:600;color:var(--paper)}
+.hero-stats span{font-size:14px;color:var(--soft);max-width:220px}
+
+/* sections */
+section.block{padding:72px 0 8px}
+.sec-head{display:flex;gap:16px;align-items:baseline}
+.sec-num{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--muted)}
+h2{font-size:clamp(26px,3.2vw,36px);margin:0;letter-spacing:-.01em;line-height:1.15;font-weight:700}
+h3{font-size:20px;margin:0;font-weight:700;line-height:1.25}
+.sec-sub{color:var(--muted);font-size:17px;max-width:880px;margin:10px 0 28px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px}
+.dark{background:var(--ink);color:var(--paper);border-radius:12px;padding:24px}
+.label{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.dark .label{color:var(--mint)}
+.note{font-size:13px;line-height:1.55;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.autofit{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.row>.mono{white-space:nowrap}
+@media(max-width:1000px){.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:minmax(0,1fr)}.hero .wrap{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:700px){.grid2,.grid4{grid-template-columns:minmax(0,1fr)}.wrap{padding:0 16px}}
+
+/* lineage flow */
+.flow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:20px;position:relative}
+.step{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;font-size:14px;line-height:1.45;color:var(--ink2);min-height:200px}
+.step.hot{border:2px solid var(--ink)}
+.step .n{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal-d)}
+.step b{display:block;font-size:17px;color:var(--ink);margin:4px 0 6px}
+.step:not(:last-child)::after{content:"";position:absolute;right:-17px;top:50%;width:14px;height:2px;background:var(--muted)}
+.step:not(:last-child)::before{content:"";position:absolute;right:-19px;top:calc(50% - 4px);border-left:6px solid var(--muted);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.loop{margin-top:20px;border:2px dashed var(--teal);border-top:none;border-radius:0 0 14px 14px;padding:20px 24px 18px;display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:24px;align-items:start}
+.loop .tag{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--teal-d);font-weight:600;white-space:nowrap}
+.loop p{font-size:14px;color:var(--ink2)}
+@media(max-width:1100px){.flow{grid-template-columns:repeat(2,minmax(0,1fr))}.step::after,.step::before{display:none}.step{min-height:0}.loop{grid-template-columns:1fr}}
+
+/* tags */
+.pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.08em;padding:4px 9px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
+.t-static{background:#D3EEE9;color:#0B5B50}.t-dynamic{background:#F7E6C4;color:#75470A}.t-high{background:#F3D5CE;color:#7A2416}
+.t-cloud{background:#E3E8E5;color:#14201B}.t-local{background:#F7E6C4;color:#75470A}
+
+/* controls */
+.btn{min-height:44px;border:1px solid var(--ink);background:#fff;color:var(--ink);border-radius:8px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:left}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.btn:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.seg{display:flex;gap:6px}.seg .btn{flex:1 1 0;padding:0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chips .btn{border-radius:999px;padding:0 14px}
+.dot{width:12px;height:12px;border-radius:6px;display:inline-block;flex:0 0 auto;border:1px solid #fff}
+.hwlist{display:flex;flex-direction:column;gap:6px}
+.hwlist .btn{justify-content:space-between;min-height:52px;padding:8px 14px}
+.hwlist .btn small{display:block;font-size:12px;font-weight:500;opacity:.8}
+select{min-height:44px;width:100%;border:1px solid var(--ink);border-radius:8px;background:#fff;font:inherit;font-size:14px;padding:0 10px;color:var(--ink)}
+input[type=number]{min-height:44px;width:100%;border:1px solid var(--ink);border-radius:8px;background:#fff;font:inherit;font-size:15px;padding:0 10px;color:var(--ink);font-family:'IBM Plex Mono',monospace}
+input[type=range]{width:100%;accent-color:var(--teal);min-height:32px;margin:0}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.ctl .row label,.ctl>label{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.ctl .val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14px;min-height:44px;cursor:pointer}
+.toggle input{width:20px;height:20px;accent-color:var(--teal)}
+.side{flex:1 1 300px;max-width:390px;display:flex;flex-direction:column;gap:22px}
+.mainc{flex:3 1 640px;min-width:0;display:flex;flex-direction:column;gap:24px}
+.layout{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+@media(max-width:760px){.side{max-width:none}}
+
+/* stats */
+.stat b{display:block;font-family:'IBM Plex Mono',monospace;font-size:38px;font-weight:600;line-height:1.05}
+.stat span{display:block;font-size:14px;line-height:1.45;color:var(--soft);margin-top:6px}
+.big{font-family:'IBM Plex Mono',monospace;font-size:40px;font-weight:600;line-height:1}
+
+/* bars */
+.bar{height:14px;background:var(--track);border-radius:7px;overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.bar.thin{height:6px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:10px;border-radius:3px;display:inline-block}
+svg text{font-family:'IBM Plex Mono',monospace}
+
+/* compare list */
+.pick{max-height:300px;overflow:auto;border:1px solid var(--line2);border-radius:8px;padding:8px 12px}
+.pick h4{margin:10px 0 4px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.chk{display:flex;align-items:center;gap:10px;min-height:36px;font-size:14px;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--teal)}
+.chk em{font-style:normal;font-size:12px;color:var(--muted);margin-left:auto}
+.cmp-row{display:grid;grid-template-columns:minmax(180px,260px) minmax(0,1fr) 120px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line2)}
+.cmp-row:last-child{border-bottom:none}
+.cmp-row .nm{font-weight:600;font-size:15px;line-height:1.3}
+.cmp-row .meta{font-size:12px;color:var(--muted);line-height:1.4;margin-top:2px}
+.cmp-row .num{font-family:'IBM Plex Mono',monospace;font-weight:600;text-align:right;font-size:15px}
+.cmp-row .num small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.cmp-row.off{opacity:.55}
+@media(max-width:700px){.cmp-row{grid-template-columns:1fr auto}.cmp-row .bwrap{grid-column:1/-1;grid-row:2}}
+
+/* day lineage */
+.dflow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px}
+.dflow .nd{flex:1 1 104px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:13px;line-height:1.45;color:var(--ink2)}
+.dflow .nd b{display:block;font-size:15px;color:var(--ink)}
+.dflow .nd .v{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--ink);display:block;margin-top:6px}
+.dflow .ar{align-self:center;color:var(--muted);font-size:20px;flex:0 0 auto}
+.dflow .who{flex:0 0 auto;align-self:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);width:72px}
+.ins{display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none}
+.ins li{display:flex;gap:12px;font-size:15px;line-height:1.5}
+.ins li::before{content:"";flex:0 0 8px;height:8px;border-radius:4px;background:var(--mint);margin-top:8px}
+.warn{background:#F3D5CE;color:#7A2416;border-radius:8px;padding:10px 14px;font-size:14px}
+
+table.hw{width:100%;border-collapse:collapse;font-size:15px}
+table.hw th{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;color:var(--muted);font-weight:500;text-align:left;padding:8px;border-bottom:1px solid var(--ink)}
+table.hw td{padding:11px 8px;border-bottom:1px solid var(--line2)}
+table.hw td.n{white-space:nowrap;font-family:'IBM Plex Mono',monospace;text-align:right}
+table.hw tr:last-child td{border-bottom:none}
+.tblwrap{overflow-x:auto}
+footer{margin-top:72px;background:var(--ink);color:var(--soft);padding:48px 0;font-size:14px;line-height:1.6}
+footer a{color:var(--mint)}footer a:hover{color:#fff}
+footer b{color:var(--paper)}
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="Sections">
+<div class="wrap">
+<span class="brand">AI × ENERGY × CARBON</span>
+<a href="#lineage">1 · Lineage</a>
+<a href="#grid">2 · Grid simulator</a>
+<a href="#compare">3 · Compare models</a>
+<a href="#workday">4 · Your workday</a>
+<a href="#sources">Sources</a>
+</div>
+</nav>
+
+<header class="hero">
+<div class="wrap">
+<div>
+<div class="kicker">Whole system view · interactive</div>
+<h1>Every AI answer starts at a power plant.</h1>
+<p class="lede">The same question can cost very different amounts of energy and carbon. It depends on which model answers, which chip runs it, which grid powers it, what hour it is, and the device you watch it on. This page lets you play with all of them.</p>
+<div class="hero-stats" id="heroStats"></div>
+</div>
+<div class="eq">
+<div class="label">The equation</div>
+<div class="f">CO₂e = <span style="color:var(--gold)">energy</span> × <span>PUE</span> × <span style="color:var(--mint)">carbon intensity</span><br>+ embodied carbon</div>
+<p style="font-size:15px;color:var(--soft)"><b style="color:#fff">Energy</b> depends on the model, chip and workload. <b style="color:#fff">PUE</b> is data center overhead. <b style="color:#fff">Carbon intensity</b> depends on place and hour. <b style="color:#fff">Embodied</b> is the carbon of making the chips, buildings and your device.</p>
+</div>
+</div>
+</header>
+
+<main>
+
+<!-- 1 LINEAGE -->
+<section class="block" id="lineage">
+<div class="wrap">
+<div class="sec-head"><span class="sec-num">01</span><h2>The lineage: from power plant to your screen, and back</h2></div>
+<p class="sec-sub">Every prompt pulls energy through seven steps. Two grids are usually involved: the one powering the data center and the one powering your own device.</p>
+
+<div class="flow">
+<div class="step"><span class="n">01</span><b>Generation</b>Hydro, nuclear, wind, solar, gas, coal. The mix sets how much CO₂ each kWh carries.</div>
+<div class="step hot"><span class="n">02 · THE MOVER</span><b>Grid</b>Carbon intensity (g CO₂/kWh) changes by region and by hour as sun, wind and demand move.</div>
+<div class="step"><span class="n">03</span><b>Data center</b>Cooling and power losses add overhead (PUE). Cooling can also use water.</div>
+<div class="step"><span class="n">04</span><b>Hardware</b>CPUs, GPUs, TPUs. Work per watt sets the kWh per answer. Making chips has its own carbon.</div>
+<div class="step"><span class="n">05</span><b>AI model</b>Bigger models and long agent sessions burn more tokens. Same task: over 40× energy spread between models.</div>
+<div class="step"><span class="n">06</span><b>Network</b>Moving text across the internet. Small for chat, but it adds up with files and images.</div>
+<div class="step hot"><span class="n">07 · OFTEN FORGOTTEN</span><b>Your device</b>The laptop or desktop you watch on. Running a model locally moves all the work here, on your home grid.</div>
+</div>
+<div class="loop">
+<span class="tag">↺ and back</span>
+<p>Clean demand funds new wind, solar and storage through power purchase agreements.</p>
+<p>Carbon-aware scheduling moves flexible jobs to clean hours and clean regions.</p>
+<p>Heat reuse, longer device life and recycling shrink the embodied part.</p>
+</div>
+
+<div style="margin-top:48px" class="stack">
+<h3>Three kinds of grid</h3>
+<p class="note" style="font-size:15px;margin-top:-8px">Big number: 2025 annual average (Ember). Curves: modelled day, solid = sunny summer, dashed = calm winter. Same 0 to 800 g scale on all four.</p>
+<div class="grid4" id="gridTypes"></div>
+</div>
+
+<div class="grid2" style="margin-top:32px">
+<div class="card stack">
+<h3>Compute per watt in the data center</h3>
+<div class="tblwrap">
+<table class="hw">
+<thead><tr><th>CHIP</th><th style="text-align:right">BF16 TFLOPS</th><th style="text-align:right">POWER</th><th style="text-align:right">TFLOPS/W</th><th style="text-align:right">ENERGY, SAME JOB</th></tr></thead>
+<tbody>
+<tr><td><b>AMD EPYC 9654</b> <span class="note">CPU</span></td><td class="n">~15</td><td class="n">360 W</td><td class="n">0.04</td><td class="n" style="color:#7A2416;font-weight:600">~34×</td></tr>
+<tr><td><b>NVIDIA A100 SXM</b></td><td class="n">312</td><td class="n">400 W</td><td class="n">0.78</td><td class="n">1.81×</td></tr>
+<tr><td><b>NVIDIA H100 SXM</b> <span class="note">baseline</span></td><td class="n">989</td><td class="n">700 W</td><td class="n">1.41</td><td class="n">1.00×</td></tr>
+<tr><td><b>AMD Instinct MI300X</b></td><td class="n">1,307</td><td class="n">750 W</td><td class="n">1.74</td><td class="n">0.81×</td></tr>
+<tr><td><b>NVIDIA B200</b></td><td class="n">2,250</td><td class="n">1,000 W</td><td class="n">2.25</td><td class="n" style="color:#0B5B50;font-weight:600">0.63×</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Peak dense BF16 specs at rated power. Real jobs run below peak, so batching and utilization matter as much as the chip.</p>
+</div>
+<div class="dark stack" id="cleerFacts"></div>
+</div>
+</div>
+</section>
+
+<!-- 2 GRID SIMULATOR -->
+<section class="block" id="grid">
+<div class="wrap">
+<div class="sec-head"><span class="sec-num">02</span><h2>Grid simulator: where and when should a job run?</h2></div>
+<p class="sec-sub">Pick Azure regions, scrub through the day, change season and wind. See how the carbon index moves, and what that means for one AI job.</p>
+
+<div class="layout">
+<aside class="side card">
+<div class="ctl"><span class="label">Azure regions</span><div class="chips" id="gRegions"></div></div>
+<div class="ctl">
+<div class="row"><label for="gHour">Start time (CET)</label><span class="val" id="gHourVal"></span></div>
+<input id="gHour" type="range" min="0" max="23" step="1">
+<button type="button" class="btn" id="gPlay" style="background:var(--mint);border-color:var(--mint)">Play the day</button>
+</div>
+<div class="ctl"><span class="label">Season</span><div class="seg" id="gSeason"></div></div>
+<div class="ctl"><span class="label">Wind</span><div class="seg" id="gWind"></div></div>
+<div class="ctl"><span class="label">Data center hardware</span><div class="hwlist" id="gHw"></div></div>
+<div class="ctl">
+<div class="row"><label for="gSize">Job size</label><span class="val" id="gSizeVal"></span></div>
+<input id="gSize" type="range" min="100" max="5000" step="100">
+</div>
+<div class="ctl">
+<div class="row"><label for="gDur">Run duration</label><span class="val" id="gDurVal"></span></div>
+<input id="gDur" type="range" min="1" max="12" step="1">
+</div>
+<div style="background:var(--paper);border-radius:8px;padding:16px" class="stack">
+<span class="label">Energy at the servers</span>
+<span class="big" style="font-size:26px" id="gIt"></span>
+<p class="note" id="gItNote"></p>
+</div>
+</aside>
+
+<div class="mainc">
+<div class="card stack" style="gap:12px">
+<div class="row" style="flex-wrap:wrap"><h3>Grid carbon intensity over the day</h3><div class="legend" id="gLegend"></div></div>
+<div id="gChart"></div>
+<div class="legend"><span><i class="sw" style="background:#DDE3E0"></i>Night (sun down)</span><span><i class="sw" style="background:#D7E9E6;border:1px dashed var(--teal)"></i>Your job window</span><span id="gClockNote"></span></div>
+</div>
+<div class="dark grid3" id="gStats"></div>
+<div class="autofit" id="gCards"></div>
+<div class="card stack">
+<div class="row" style="flex-wrap:wrap"><h3>Emissions for this job</h3><div class="legend"><span><i class="sw" style="background:var(--ink)"></i>Start at chosen time</span><span><i class="sw" style="background:#9AA6A1"></i>Best start that day</span></div></div>
+<div class="stack" id="gBars" style="gap:14px"></div>
+<p class="note">Hourly curves are a model calibrated to 2025 Ember annual averages and shaped by sun, wind and demand. PUE per region is assumed. Illustrative, not live grid data.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 3 COMPARE -->
+<section class="block" id="compare">
+<div class="wrap">
+<div class="sec-head"><span class="sec-num">03</span><h2>Compare models: in the cloud or on your own machine</h2></div>
+<p class="sec-sub">Cloud figures come from the CLEER dataset (Sustainable AI Group), re-run with your region's grid and PUE. Local figures are estimated from your device's memory speed, compute and power draw.</p>
+
+<div class="card" id="setup" style="margin-bottom:24px">
+<div class="row" style="flex-wrap:wrap;margin-bottom:16px"><h3>Your setup</h3><span class="note">Used by sections 3 and 4</span></div>
+<div class="grid4" style="gap:20px">
+<div class="ctl"><label for="uDevice">Your device</label><select id="uDevice"></select><p class="note" id="uDeviceNote"></p></div>
+<div class="ctl"><label for="uGrid">Where you are (your grid)</label><select id="uGrid"></select><p class="note" id="uGridNote"></p></div>
+<div class="ctl"><label for="uCloud">Where the cloud model runs</label><select id="uCloud"></select><p class="note" id="uCloudNote"></p></div>
+<div class="ctl"><span class="label">Season and wind</span><div class="seg" id="uSeason"></div><div class="seg" id="uWind"></div>
+<label class="toggle"><input type="checkbox" id="uEmb"> Count device manufacturing</label></div>
+</div>
+<div class="grid2" style="margin-top:20px;gap:20px;align-items:end">
+<div class="ctl"><div class="row"><label for="uCache">Prompt cache hit rate</label><span class="val" id="uCacheVal"></span></div><input id="uCache" type="range" min="0" max="95" step="5">
+<p class="note">Share of agent input read from cache (long chats get part of it, a single question none). Cached input costs about 10% of normal input; Anthropic charges 1.25× to write the cache.</p></div>
+<p class="note">Prices are list API prices as they appear in CLEER (Artificial Analysis, Sep 2026), worked back to $ per million input and output tokens. Session token counts are CLEER's own workloads, so every model does the same work.</p>
+</div>
+</div>
+
+<div class="layout">
+<aside class="side card">
+<div class="ctl"><span class="label">Workload (one session)</span><div class="hwlist" id="cWork"></div></div>
+<div class="ctl"><span class="label">Show</span><div class="seg" id="cMetric"></div></div>
+<div class="ctl"><span class="label">Cloud models</span>
+<div class="pick" id="cCloud"></div></div>
+<div class="ctl"><span class="label">Local models (on your device)</span>
+<div class="pick" id="cLocal" style="max-height:none"></div></div>
+</aside>
+<div class="mainc">
+<div class="dark grid3" id="cStats"></div>
+<div class="card">
+<div class="row" style="flex-wrap:wrap;margin-bottom:8px"><h3 id="cTitle">Per session</h3><div class="legend"><span><i class="sw" style="background:var(--c-dc)"></i>Cloud, operational</span><span><i class="sw" style="background:var(--c-emb)"></i>Cloud, embodied</span><span><i class="sw" style="background:var(--c-local)"></i>Local inference</span></div></div>
+<div id="cRows"></div>
+</div>
+<p class="note">Cloud energy is total facility energy (chips, host servers, idle capacity, cooling) from CLEER, with CLEER's US PUE of 1.45 replaced by the chosen region's PUE. Embodied carbon (chips and data center construction) is from CLEER. Local energy is only the extra power your device draws while generating. Capability index is the Artificial Analysis Intelligence Index as listed by CLEER: a smaller number usually means a less capable model, so compare like with like.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 4 WORKDAY -->
+<section class="block" id="workday">
+<div class="wrap">
+<div class="sec-head"><span class="sec-num">04</span><h2>Your workday, end to end</h2></div>
+<p class="sec-sub">A normal day: your device is on, you chat with an AI and you let an agent work while you watch. Scale it from one person to a whole engineering org, from a day to a year, and see energy, CO₂ and money side by side.</p>
+
+<div class="layout">
+<aside class="side card">
+<div class="note" id="wSetup" style="background:var(--paper);border-radius:8px;padding:12px 14px"></div>
+<div class="ctl"><span class="label">Time window</span><div class="seg" id="wWindow"></div><p class="note">Week = 5 workdays, month ≈ 18, year = 220.</p></div>
+<div class="ctl">
+<div class="row" style="align-items:center"><label for="wUsersNum">People (e.g. developers)</label><input id="wUsersNum" type="number" min="1" max="100000" step="1" style="width:110px"></div>
+<input id="wUsers" type="range" min="0" max="15" step="1" aria-label="People, quick steps from 1 to 3000">
+<p class="note">Drag for 1 to 3,000, or type any number. Everyone gets the same device, setup and day.</p>
+</div>
+<div class="ctl"><span class="label">Where does the AI run?</span><div class="seg" id="wMode"></div></div>
+<div class="ctl" id="wCloudBox"><label for="wCloudModel">Cloud model</label><select id="wCloudModel"></select></div>
+<div class="ctl" id="wLocalBox"><label for="wLocalModel">Local model</label><select id="wLocalModel"></select></div>
+<div class="ctl" id="wCostBox"><span class="label">How you pay</span><div class="seg" id="wCost"></div>
+<p class="note" id="wCostApi">Pay per token at list API prices, with prompt caching from your setup.</p>
+<div id="wCostClaude" class="stack" style="gap:8px"><label for="wClaudePlan" class="label">Claude plan (one seat per person)</label><select id="wClaudePlan"></select><div class="seg" id="wBilling"></div></div>
+<div id="wCostCopilot" class="stack" style="gap:8px"><label for="wCpPlan" class="label">Copilot plan (one seat per person)</label><select id="wCpPlan"></select>
+<p class="note">Since June 2026 Copilot bills chat and agent use as AI credits ($0.01 each) at each model's API token rates, incl. cached tokens. Each seat includes credits worth its price. Code completions are free.</p>
+<label class="toggle"><input type="checkbox" id="wCpBill"> Set usage from my bill instead of the sliders</label>
+<div id="wCpBillBox" class="ctl"><label for="wCpOver">Extra AI credits on the monthly bill ($, all seats)</label><input id="wCpOver" type="number" min="0" step="100"><p class="note">We assume the included credits are fully used, plus this extra.</p></div>
+</div>
+</div>
+<div class="grid2" style="gap:12px">
+<div class="ctl"><label for="wStart">Start</label><select id="wStart"></select></div>
+<div class="ctl"><label for="wEnd">End</label><select id="wEnd"></select></div>
+</div>
+<div class="ctl">
+<div class="row"><label for="wChats">Chat sessions per day</label><span class="val" id="wChatsVal"></span></div>
+<input id="wChats" type="range" min="0" max="60" step="1">
+<div class="seg" id="wChatTier"></div>
+</div>
+<div class="ctl">
+<div class="row"><label for="wAgents">Agent sessions per day</label><span class="val" id="wAgentsVal"></span></div>
+<input id="wAgents" type="range" min="0" max="8" step="1">
+<div class="seg" id="wAgentTier"></div>
+</div>
+<div class="ctl"><span class="label">Chart shows</span><div class="seg" id="wMetric"></div></div>
+</aside>
+
+<div class="mainc">
+<div class="dark grid3" id="wStats"></div>
+<div id="wWarn"></div>
+<div class="card stack" style="gap:12px">
+<div class="row" style="flex-wrap:wrap"><h3 id="wChartTitle">Hour by hour</h3><div class="legend"><span><i class="sw" style="background:var(--c-desk)"></i>Your device (on)</span><span><i class="sw" style="background:var(--c-local)"></i>Local AI</span><span><i class="sw" style="background:var(--c-dc)"></i>Data center + network</span><span id="wEmbLeg"><i class="sw" style="background:var(--c-emb)"></i>Embodied</span></div></div>
+<div id="wChart"></div>
+</div>
+<div class="card stack">
+<h3 id="wFlowTitle">Lineage</h3>
+<div class="stack" id="wFlow" style="gap:12px"></div>
+</div>
+<div class="grid2">
+<div class="card stack">
+<h3 id="wSplitTitle">Where the footprint comes from</h3>
+<div id="wSplit" class="stack" style="gap:14px"></div>
+</div>
+<div class="card stack">
+<h3 id="wVsTitle">Cloud vs local</h3>
+<div id="wVs" class="stack" style="gap:14px"></div>
+</div>
+</div>
+<div class="dark stack">
+<span class="label">What this means</span>
+<ul class="ins" id="wIns"></ul>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+
+<footer id="sources">
+<div class="wrap grid2">
+<div class="stack" style="gap:10px">
+<b>Sources</b>
+<p>Grid intensity: Ember Yearly Electricity Data, 2025 annual national averages, via <a href="https://greencalculus.com/data/grid-electricity-emission-factors/">GreenCalculus grid emission factors</a>.</p>
+<p>Cloud model energy and embodied carbon per session: <a href="https://cleerdash.sustainableaigroup.com/">CLEER Dashboard</a> by Sustainable AI Group (CLEER-Text-0926, data <a href="https://github.com/sustainableaigroup/CLEER">CC BY-NC 4.0</a>). Capability index: Artificial Analysis, as listed in CLEER.</p>
+<p>Prices: <a href="https://platform.claude.com/docs/en/about-claude/pricing">Claude API pricing</a>, <a href="https://claude.com/pricing">Claude plans</a>, <a href="https://docs.github.com/en/copilot/get-started/plans">GitHub Copilot plans</a> and <a href="https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/">Copilot usage-based billing</a>. Other models: list prices via CLEER / Artificial Analysis.</p>
+<p>Data center chips: vendor peak dense BF16 specs and rated power. Device manufacturing: Apple product environmental reports and the <a href="https://github.com/rarecoil/laptop-co2e">laptop-co2e</a> compilation, rounded; desktops estimated.</p>
+</div>
+<div class="stack" style="gap:10px">
+<b>Assumptions (read before quoting numbers)</b>
+<p>Hourly grid curves are an illustrative model calibrated to annual averages, not live data. Average, not marginal, intensity is used. Data center PUE per region is assumed. Device power, memory bandwidth and compute are typical estimates. Local speed is derived from them, assuming 4-bit weights and 75% of agent context reused from cache. Session token counts are back-calculated from CLEER's per-session costs and list prices (they match published prices exactly for Claude and GPT-5 models). Costs: list API prices, cache reads at 10% of input (25% for GPT-4.1, 50% for GPT-4o), Anthropic cache writes at 1.25×; batch discounts and enterprise deals are not included. Claude plan prices from claude.com/pricing; Copilot plans and AI credits from GitHub (usage-based billing since June 2026). Desk electricity at $0.30/kWh. Week = 5, month ≈ 18.3, year = 220 workdays. Network energy uses 0.03 kWh per GB. Device manufacturing is spread over 4 years × 1,760 work hours. Rooftop solar is counted at 41 g/kWh lifecycle and assumed to cover daytime use in proportion to sunshine. All Azure regions shown use CET, except UK South (one hour behind).</p>
+</div>
+</div>
+</footer>
+
+<script>
+const CLEER=[["Qwen3 235B","Alibaba","Open","H200 x4",9,[[0.1093,0.0071],[0.3592,0.0232],[3.8085,0.2464],[16.0404,1.0377],[34.7027,2.2451],[127.9508,8.2778]],[4.059,7.166]],["Qwen3-30B-A3B","Alibaba","Open","H200 x2",10,[[0.0127,0.0008],[0.0439,0.0028],[0.4323,0.028],[1.0344,0.0669],[2.1967,0.1421],[8.2381,0.533]],[1.16,2.047]],["Qwen3-Next-80B","Alibaba","Open","B300 x5",11,[[0.0331,0.0021],[0.1144,0.0074],[1.1225,0.0726],[2.5741,0.1665],[5.4559,0.353],[20.4967,1.326]],[0.87,0.936]],["Qwen3.5-397B","Alibaba","Open","B300 x5",18,[[0.0902,0.0058],[0.3126,0.0202],[3.0518,0.1974],[6.6019,0.4271],[13.9546,0.9028],[52.5563,3.4002]],[3.479,2.544]],["Claude Fable 5","Anthropic","Closed","B200/B300",50,[[0.5464,0.0353],[1.9301,0.1249],[18.2975,1.1838],[25.5272,1.6515],[52.5196,3.3978],[202.7509,13.1171]],[10.0,50.001]],["Claude Haiku 3.5","Anthropic","Closed","B200/B300",9,[[0.041,0.0027],[0.1428,0.0092],[1.3832,0.0895],[2.7118,0.1754],[5.7033,0.369],[21.5787,1.396]],[0.8,4.0]],["Claude Haiku 4.5","Anthropic","Closed","B200/B300",17,[[0.0161,0.001],[0.0545,0.0035],[0.5518,0.0357],[1.7003,0.11],[3.6458,0.2359],[13.5524,0.8768]],[1.0,5.0]],["Claude Opus 3","Anthropic","Closed","B200/B300",9,[[0.3879,0.0251],[1.3773,0.0891],[12.9514,0.8379],[15.2675,0.9877],[30.9671,2.0034],[121.1194,7.8359]],[15.0,75.001]],["Claude Opus 4","Anthropic","Closed","B200/B300",21,[[0.2672,0.0173],[0.9445,0.0611],[8.9445,0.5787],[12.2246,0.7909],[25.1106,1.6245],[97.0814,6.2807]],[15.0,75.001]],["Claude Opus 4.1","Anthropic","Closed","B200/B300",23,[[0.2846,0.0184],[1.0066,0.0651],[9.5218,0.616],[12.7366,0.824],[26.1174,1.6897],[101.1327,6.5428]],[15.0,75.001]],["Claude Opus 4.5","Anthropic","Closed","B200/B300",29,[[0.2895,0.0187],[1.0233,0.0662],[9.6913,0.627],[13.2644,0.8581],[27.2496,1.7629],[105.3401,6.815]],[5.0,25.0]],["Claude Opus 4.6","Anthropic","Closed","B200/B300",32,[[0.2779,0.018],[0.983,0.0636],[9.2995,0.6016],[12.4511,0.8055],[25.534,1.6519],[98.8665,6.3962]],[5.0,25.0]],["Claude Opus 4.7","Anthropic","Closed","B200/B300",41,[[0.3055,0.0198],[1.0793,0.0698],[10.2315,0.6619],[14.2719,0.9233],[29.3626,1.8996],[113.3551,7.3336]],[5.0,25.0]],["Claude Opus 4.8","Anthropic","Closed","B200/B300",42,[[0.3669,0.0237],[1.2943,0.0837],[12.2956,0.7955],[17.8423,1.1543],[36.8179,2.382],[141.7485,9.1705]],[5.0,25.0]],["Claude Opus 5","Anthropic","Closed","B200/B300",51,[[0.3141,0.0203],[1.1101,0.0718],[10.5169,0.6804],[14.4761,0.9365],[29.752,1.9248],[114.967,7.4378]],[5.0,25.0]],["Claude Sonnet 4","Anthropic","Closed","B200/B300",19,[[0.1456,0.0094],[0.51,0.033],[4.9001,0.317],[8.5833,0.5553],[17.9364,1.1604],[68.2631,4.4163]],[3.0,15.0]],["Claude Sonnet 4.5","Anthropic","Closed","B200/B300",21,[[0.2349,0.0152],[0.8286,0.0536],[7.8719,0.5093],[11.4186,0.7387],[23.5618,1.5243],[90.7149,5.8688]],[3.0,15.0]],["Claude Sonnet 4.6","Anthropic","Closed","B200/B300",30,[[0.1398,0.009],[0.4933,0.0319],[4.6866,0.3032],[6.8124,0.4407],[14.0593,0.9096],[54.1217,3.5014]],[3.0,15.0]],["Claude Sonnet 5","Anthropic","Closed","B200/B300",38,[[0.1641,0.0106],[0.573,0.0371],[5.533,0.358],[10.4143,0.6738],[21.8538,1.4138],[82.8539,5.3603]],[2.0,10.0]],["DeepSeek V3","DeepSeek","Open","H200 x4",8,[[0.1646,0.0106],[0.5341,0.0346],[5.7705,0.3733],[26.8753,1.7387],[58.2787,3.7704],[214.4221,13.8721]],[2.087,0.257]],["DeepSeek V4 Pro","DeepSeek","Open","B300 x6",36,[[0.1688,0.0109],[0.585,0.0378],[5.7132,0.3696],[12.4136,0.8031],[26.2443,1.6979],[98.8229,6.3934]],[0.827,4.142]],["DeepSeek-V4-Flash","DeepSeek","Open","B300 x6",34,[[0.0661,0.0043],[0.2252,0.0146],[2.2601,0.1462],[6.4723,0.4187],[13.8425,0.8955],[51.5763,3.3368]],[0.276,1.381]],["Gemini 3.5 Flash-Lite","Google","Closed","TPU v6/v7",22,[[0.0428,0.0044],[0.1499,0.0153],[1.4423,0.1476],[2.5883,0.2649],[5.4166,0.5543],[20.5874,2.1067]],[0.3,2.5]],["Gemini 3.6 Flash","Google","Closed","TPU v6/v7",34,[[0.1415,0.0145],[0.499,0.0511],[4.7427,0.4853],[6.9394,0.7101],[14.3283,1.4662],[55.133,5.6418]],[1.15,3.603]],["Gemini 3.7 Flash","Google","Closed","TPU v6/v7",39,[[0.0979,0.01],[0.3434,0.0351],[3.2927,0.3369],[5.5718,0.5702],[11.6186,1.1889],[44.3046,4.5337]],[0.75,3.75]],["Gemma-4-26B-A4B","Google","Open","B300 x8",17,[[0.0442,0.0029],[0.1534,0.0099],[1.4962,0.0968],[3.208,0.2075],[6.7779,0.4385],[25.5373,1.6521]],[0.574,0.237]],["MiniMax-M3","MiniMax","Open","B300 x4",29,[[0.0517,0.0033],[0.1823,0.0118],[1.731,0.112],[2.4985,0.1616],[5.1537,0.3334],[19.8488,1.2841]],[0.46,1.141]],["Kimi K2.6","Moonshot","Open","B300 x8",27,[[0.2045,0.0132],[0.7118,0.0461],[6.9061,0.4468],[13.8309,0.8948],[29.1211,1.884],[110.0673,7.1209]],[1.305,3.87]],["Kimi K3","Moonshot","Open","B300 x8",44,[[0.4457,0.0288],[1.5545,0.1006],[15.0347,0.9727],[28.9014,1.8698],[60.7189,3.9282],[229.9569,14.8772]],[3.0,15.0]],["GPT-4.1","OpenAI","Closed","B200/B300",13,[[0.2528,0.0164],[0.8985,0.0581],[8.4334,0.5456],[9.5126,0.6154],[19.214,1.2431],[75.4393,4.8806]],[3.599,7.414]],["GPT-4.1 mini","OpenAI","Closed","B200/B300",10,[[0.0232,0.0015],[0.0823,0.0053],[0.7761,0.0502],[0.9658,0.0625],[1.9685,0.1274],[7.6649,0.4959]],[0.72,1.483]],["GPT-4.1 nano","OpenAI","Closed","B200/B300",8,[[0.018,0.0012],[0.0637,0.0041],[0.6022,0.039],[0.8007,0.0518],[1.6411,0.1062],[6.3576,0.4113]],[0.18,0.371]],["GPT-4o","OpenAI","Closed","B200/B300",8,[[0.3145,0.0203],[1.1193,0.0724],[10.582,0.6846],[15.6448,1.0121],[32.9041,2.1287],[129.0467,8.3487]],[7.831,8.046]],["GPT-5","OpenAI","Closed","B200/B300",23,[[0.3019,0.0195],[1.0721,0.0694],[10.0811,0.6522],[11.8785,0.7685],[24.0921,1.5587],[94.2334,6.0965]],[1.25,9.999]],["GPT-5 mini","OpenAI","Closed","B200/B300",17,[[0.0346,0.0022],[0.1228,0.0079],[1.1543,0.0747],[1.3463,0.0871],[2.7281,0.1765],[10.6798,0.6909]],[0.25,2.0]],["GPT-5 nano","OpenAI","Closed","B200/B300",13,[[0.0163,0.0011],[0.0574,0.0037],[0.5448,0.0352],[0.7649,0.0495],[1.5746,0.1019],[6.0758,0.3931]],[0.05,0.4]],["GPT-5.1","OpenAI","Closed","B200/B300",25,[[0.3982,0.0258],[1.415,0.0915],[13.2904,0.8598],[15.2408,0.986],[30.833,1.9948],[120.882,7.8205]],[1.25,9.999]],["GPT-5.2","OpenAI","Closed","B200/B300",30,[[0.4175,0.027],[1.4808,0.0958],[13.9464,0.9023],[17.007,1.1003],[34.6017,2.2386],[134.9537,8.7309]],[1.75,13.998]],["GPT-5.3","OpenAI","Closed","B200/B300",33,[[0.3105,0.0201],[1.1029,0.0714],[10.3657,0.6706],[12.0712,0.7809],[24.4562,1.5822],[95.7534,6.1948]],[1.75,13.998]],["GPT-5.4","OpenAI","Closed","B200/B300",39,[[0.4105,0.0266],[1.4566,0.0942],[13.7089,0.8869],[16.4799,1.0662],[33.4862,2.1664],[130.757,8.4594]],[2.5,14.999]],["GPT-5.4 mini","OpenAI","Closed","B200/B300",24,[[0.0223,0.0014],[0.0788,0.0051],[0.7471,0.0483],[1.0456,0.0676],[2.1517,0.1392],[8.3046,0.5373]],[0.75,4.5]],["GPT-5.4 nano","OpenAI","Closed","B200/B300",21,[[0.0183,0.0012],[0.0648,0.0042],[0.6138,0.0397],[0.8333,0.0539],[1.7107,0.1107],[6.6172,0.4281]],[0.2,1.25]],["GPT-5.5","OpenAI","Closed","B200/B300",38,[[0.3494,0.0226],[1.2319,0.0797],[11.7111,0.7577],[17.2153,1.1137],[35.5578,2.3004],[136.7779,8.8489]],[5.0,29.998]],["GPT-5.6 Luna","OpenAI","Closed","B200/B300",37,[[0.0348,0.0022],[0.1198,0.0078],[1.1811,0.0764],[2.8568,0.1848],[6.0692,0.3927],[22.7518,1.4719]],[0.2,1.2]],["GPT-5.6 Sol","OpenAI","Closed","B200/B300",47,[[0.266,0.0172],[0.9353,0.0605],[8.9313,0.5778],[14.1822,0.9175],[29.4516,1.9054],[112.7311,7.2932]],[5.0,29.998]],["GPT-5.6 Terra","OpenAI","Closed","B200/B300",42,[[0.1079,0.007],[0.3799,0.0246],[3.6205,0.2342],[5.5687,0.3603],[11.5392,0.7465],[44.2565,2.8632]],[2.0,11.999]],["GPT-OSS-120B","OpenAI","Open","B200 x1",12,[[0.0191,0.0012],[0.066,0.0043],[0.6479,0.0419],[1.5063,0.0975],[3.1946,0.2067],[11.9946,0.776]],[0.87,0.336]],["GPT-OSS-20B","OpenAI","Open","B200 x1",9,[[0.0121,0.0008],[0.0411,0.0027],[0.4143,0.0268],[1.2361,0.08],[2.6476,0.1713],[9.8518,0.6374]],[0.348,0.084]],["MiMo V2.5","Xiaomi","Open","B300 x8",25,[[0.1496,0.0097],[0.5309,0.0343],[4.9967,0.3233],[6.0007,0.3882],[12.192,0.7888],[47.6114,3.0802]],[0.08,0.302]],["GLM-4.7","Zhipu","Open","B300 x8",22,[[0.1302,0.0084],[0.4505,0.0291],[4.4125,0.2855],[9.9312,0.6425],[21.0311,1.3606],[79.0722,5.1156]],[3.479,1.144]],["GLM-5.2","Zhipu","Open","B300 x8",34,[[0.1486,0.0096],[0.5166,0.0334],[5.0209,0.3248],[10.2885,0.6656],[21.6884,1.4031],[81.8851,5.2976]],[2.072,4.155]]];
+
+// ---------- helpers ----------
+const $ = (s) => document.querySelector(s);
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const hh = (h) => String(((Math.floor(h) % 24) + 24) % 24).padStart(2, '0') + ':00';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function fWh(wh) {
+  if (wh >= 1e9) return fmt(wh / 1e9, 2) + ' GWh';
+  if (wh >= 1e6) return fmt(wh / 1e6, 2) + ' MWh';
+  if (wh >= 1000) return fmt(wh / 1000, wh >= 1e4 ? 1 : 2) + ' kWh';
+  if (wh >= 10) return fmt(wh, 0) + ' Wh';
+  if (wh >= 1) return fmt(wh, 1) + ' Wh';
+  if (wh >= 0.1) return fmt(wh, 2) + ' Wh';
+  return fmt(wh, 3) + ' Wh';
+}
+function fG(g) {
+  if (g >= 1e9) return fmt(g / 1e9, 2) + ' kt';
+  if (g >= 1e6) return fmt(g / 1e6, 2) + ' t';
+  if (g >= 1000) return fmt(g / 1000, g >= 1e4 ? 1 : 2) + ' kg';
+  if (g >= 10) return fmt(g, 0) + ' g';
+  if (g >= 1) return fmt(g, 1) + ' g';
+  if (g >= 0.1) return fmt(g, 2) + ' g';
+  return fmt(g, 3) + ' g';
+}
+function fTime(s) {
+  if (s < 60) return fmt(s, 0) + ' s';
+  if (s < 3600) return fmt(s / 60, s < 600 ? 1 : 0) + ' min';
+  return fmt(s / 3600, 1) + ' h';
+}
+function niceMax(v) {
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p;
+  return 10 * p;
+}
+function seg(el, opts, cur, onPick) {
+  el.innerHTML = opts.map((o) => `<button type="button" class="btn" data-v="${o.v}" aria-pressed="${String(o.v) === String(cur)}">${o.html || esc(o.label)}</button>`).join('');
+  el.onclick = (e) => { const b = e.target.closest('button[data-v]'); if (b) onPick(b.dataset.v); };
+}
+const typeClass = (t) => t === 'Static clean' ? 't-static' : t === 'Dynamic' ? 't-dynamic' : 't-high';
+
+// ---------- grid model ----------
+const SEASONS = {
+  summer: { label: 'Summer', rise: 5, set: 21.5, sun: 1.0, level: 0.9 },
+  spring: { label: 'Spring/Autumn', rise: 6.5, set: 19.5, sun: 0.65, level: 1.0 },
+  winter: { label: 'Winter', rise: 8.5, set: 16.5, sun: 0.3, level: 1.12 }
+};
+const WINDS = { calm: { label: 'Calm', k: 0.5 }, normal: { label: 'Normal', k: 0 }, windy: { label: 'Windy', k: -0.8 } };
+const GRIDS = {
+  se: { country: 'Sweden', azure: 'Sweden Central', city: 'Gävle', avg: 35, pue: 1.10, tz: 0, solar: .10, evening: .08, wind: .10, floor: 12, seed: .3, type: 'Static clean', color: '#13A08C' },
+  fr: { country: 'France', azure: 'France Central', city: 'Paris', avg: 41, pue: 1.18, tz: 0, solar: .12, evening: .22, wind: .10, floor: 15, seed: 4.1, type: 'Static clean', color: '#8457B8' },
+  es: { country: 'Spain', azure: 'Spain Central', city: 'Madrid', avg: 154, pue: 1.20, tz: 0, solar: .70, evening: .28, wind: .35, floor: 25, seed: 5.2, type: 'Dynamic', color: '#E0663A' },
+  uk: { country: 'United Kingdom', azure: 'UK South', city: 'London', avg: 217, pue: 1.18, tz: -1, solar: .22, evening: .25, wind: .55, floor: 40, seed: 6.3, type: 'Dynamic', color: '#6FA8DC' },
+  nl: { country: 'Netherlands', azure: 'West Europe', city: 'Amsterdam', avg: 254, pue: 1.18, tz: 0, solar: .45, evening: .20, wind: .35, floor: 70, seed: 1.1, type: 'Dynamic', color: '#2F64B8' },
+  de: { country: 'Germany', azure: 'Germany West Central', city: 'Frankfurt', avg: 330, pue: 1.20, tz: 0, solar: .50, evening: .22, wind: .40, floor: 90, seed: 2.2, type: 'Dynamic', color: '#C47E12' },
+  pl: { country: 'Poland', azure: 'Poland Central', city: 'Warsaw', avg: 591, pue: 1.22, tz: 0, solar: .18, evening: .08, wind: .15, floor: 380, seed: 3.4, type: 'High carbon', color: '#6B1F14' },
+  gas: { country: 'Gas-powered site', azure: 'Gas-powered DC (CLEER default)', city: 'Behind-the-meter gas', avg: 640, pue: 1.45, flat: true, type: 'High carbon', color: '#555555' },
+  nlsolar: { country: 'Netherlands + rooftop solar', blend: 'nl', type: 'Dynamic', color: '#0F766E', userOnly: true }
+};
+const AZURE = ['se', 'fr', 'es', 'uk', 'nl', 'de', 'pl'];
+const solarAt = (h, S) => (h <= S.rise || h >= S.set) ? 0 : Math.pow(Math.sin(Math.PI * (h - S.rise) / (S.set - S.rise)), 1.6);
+function shape(g, h, S) {
+  const sol = solarAt(h, S) * S.sun;
+  const eve = Math.exp(-Math.pow(h - 19, 2) / 8);
+  const morn = Math.exp(-Math.pow(h - 8, 2) / 6);
+  const night = Math.exp(-Math.pow(h - 3.5, 2) / 8) + Math.exp(-Math.pow(h - 27.5, 2) / 8);
+  return 1 - g.solar * sol + g.evening * (eve + 0.5 * morn) - g.evening * 0.6 * night;
+}
+const NORM = {};
+Object.entries(GRIDS).forEach(([id, g]) => {
+  if (g.flat || g.blend) return;
+  let s = 0; for (let h = 0; h < 24; h++) s += shape(g, h, SEASONS.spring); NORM[id] = s / 24;
+});
+function ci(id, h, season, wind) {
+  const g = GRIDS[id]; const S = SEASONS[season];
+  if (g.flat) return g.avg;
+  if (g.blend) {
+    const hl = ((h % 24) + 24) % 24;
+    const cover = Math.min(1, solarAt(hl, S) * S.sun * 1.4);
+    return cover * 41 + (1 - cover) * ci(g.blend, h, season, wind);
+  }
+  let lh = h + g.tz; if (lh < 0) lh += 24; if (lh > 24) lh -= 24;
+  const v = g.avg * S.level * (1 + g.wind * WINDS[wind].k) * shape(g, lh, S) / NORM[id] * (1 + 0.025 * Math.sin(lh * 1.9 + g.seed));
+  return Math.max(g.floor, v);
+}
+const gridName = (id) => GRIDS[id].userOnly ? GRIDS[id].country : GRIDS[id].country;
+const cloudName = (id) => id === 'gas' ? GRIDS[id].azure : 'Azure ' + GRIDS[id].azure;
+
+// ---------- data center hardware (grid sim) ----------
+const HW = [
+  { id: 'cpu', name: 'AMD EPYC 9654', kind: 'CPU · 360 W · ~15 TFLOPS', tf: 15, w: 360 },
+  { id: 'a100', name: 'NVIDIA A100 SXM', kind: 'GPU · 400 W · 312 TFLOPS', tf: 312, w: 400 },
+  { id: 'h100', name: 'NVIDIA H100 SXM', kind: 'GPU · 700 W · 989 TFLOPS', tf: 989, w: 700 },
+  { id: 'mi300x', name: 'AMD Instinct MI300X', kind: 'GPU · 750 W · 1,307 TFLOPS', tf: 1307, w: 750 },
+  { id: 'b200', name: 'NVIDIA B200', kind: 'GPU · 1,000 W · 2,250 TFLOPS', tf: 2250, w: 1000 }
+];
+HW.forEach((x) => { x.rel = (x.w / x.tf) / (700 / 989); });
+
+// ---------- devices and local models ----------
+const DEVICES = [
+  { id: 'laptop', name: 'Windows laptop (14", 32 GB)', office: 10, load: 45, bw: 120, tf: 8, mem: 16, ram: 0, emb: 250, kind: 'laptop' },
+  { id: 'mba', name: 'MacBook Air (M4, 24 GB)', office: 6, load: 25, bw: 120, tf: 4, mem: 16, ram: 0, emb: 140, kind: 'laptop' },
+  { id: 'mbp', name: 'MacBook Pro 16" (M4 Max, 64 GB)', office: 12, load: 95, bw: 546, tf: 17, mem: 48, ram: 0, emb: 290, kind: 'laptop' },
+  { id: 'office', name: 'Office desktop + monitor (no GPU)', office: 55, load: 150, bw: 80, tf: 1.5, mem: 24, ram: 0, emb: 450, kind: 'desktop' },
+  { id: 'gaming', name: 'Desktop PC, RTX 4070 12 GB + monitor', office: 85, load: 330, bw: 504, tf: 60, mem: 12, ram: 32, emb: 550, kind: 'desktop' },
+  { id: 'minipc', name: 'Mini PC, Ryzen AI Max+ 128 GB + monitor', office: 40, load: 160, bw: 256, tf: 30, mem: 96, ram: 0, emb: 400, kind: 'desktop' },
+  { id: 'studio', name: 'Mac Studio (M3 Ultra, 256 GB) + monitor', office: 40, load: 230, bw: 819, tf: 28, mem: 192, ram: 0, emb: 500, kind: 'desktop' },
+  { id: 'ws', name: 'Workstation, RTX 5090 32 GB + monitor', office: 130, load: 750, bw: 1792, tf: 209, mem: 32, ram: 64, emb: 850, kind: 'desktop' }
+];
+const LOCAL = [
+  { id: 'l8', name: 'Llama 3.1 8B', active: 8, mem: 5.5, moe: false, cleer: null },
+  { id: 'goss20', name: 'GPT-OSS-20B', active: 3.6, mem: 13, moe: true, cleer: 'GPT-OSS-20B' },
+  { id: 'g26', name: 'Gemma-4-26B-A4B', active: 4, mem: 16, moe: true, cleer: 'Gemma-4-26B-A4B' },
+  { id: 'q30', name: 'Qwen3-30B-A3B', active: 3.3, mem: 18, moe: true, cleer: 'Qwen3-30B-A3B' },
+  { id: 'l70', name: 'Llama 3.3 70B', active: 70, mem: 42, moe: false, cleer: null },
+  { id: 'qn80', name: 'Qwen3-Next-80B', active: 3, mem: 46, moe: true, cleer: 'Qwen3-Next-80B' },
+  { id: 'goss120', name: 'GPT-OSS-120B', active: 5.1, mem: 65, moe: true, cleer: 'GPT-OSS-120B' }
+];
+// token basis per session, back-calculated from CLEER cost data (same workload for every model)
+const WORK = [
+  { k: 'CL', label: 'Chat · light', short: 'Light', desc: 'One quick question', tin: 1044, tout: 1319, mins: 1, agent: false, cacheShare: 0 },
+  { k: 'CT', label: 'Chat · typical', short: 'Typical', desc: 'A short back-and-forth', tin: 2091, tout: 4711, mins: 4, agent: false, cacheShare: 0.5 },
+  { k: 'CH', label: 'Chat · heavy', short: 'Heavy', desc: 'A long, deep conversation', tin: 43836, tout: 43895, mins: 30, agent: false, cacheShare: 0.8 },
+  { k: 'AL', label: 'Agent · light', short: 'Light', desc: 'A focused change to one file', tin: 697391, tout: 41399, mins: 15, agent: true, cacheShare: 1 },
+  { k: 'AT', label: 'Agent · typical', short: 'Typical', desc: 'An hour or two of agent work', tin: 1535695, tout: 82031, mins: 90, agent: true, cacheShare: 1 },
+  { k: 'AH', label: 'Agent · heavy', short: 'Heavy', desc: 'A full day of agent work', tin: 5571584, tout: 327804, mins: 420, agent: true, cacheShare: 1 }
+];
+// ---------- pricing ----------
+const cacheReadMul = (m) => /GPT-4o/.test(m[0]) ? 0.5 : /GPT-4\.1/.test(m[0]) ? 0.25 : 0.1;
+const cacheWriteMul = (m) => m[1] === 'Anthropic' ? 1.25 : 1;
+function sessionCost(m, wk, hit) {
+  if (!m[6]) return 0;
+  const [pin, pout] = m[6];
+  const h = hit * wk.cacheShare;
+  const inCost = wk.tin * (h * pin * cacheReadMul(m) + (1 - h) * pin * (h > 0 ? cacheWriteMul(m) : 1));
+  return (inCost + wk.tout * pout) / 1e6;
+}
+const CLAUDE_PLANS = [
+  { id: 'pro', name: 'Claude Pro', m: 20, a: 17 },
+  { id: 'max5', name: 'Claude Max 5x', m: 100, a: 100 },
+  { id: 'max20', name: 'Claude Max 20x', m: 200, a: 200 },
+  { id: 'team_std', name: 'Claude Team, Standard seat', m: 25, a: 20 },
+  { id: 'team_prem', name: 'Claude Team, Premium seat', m: 125, a: 100 },
+  { id: 'ent', name: 'Claude Enterprise (seat + API usage)', m: 20, a: 20, usage: true }
+];
+const COPILOT = [
+  { id: 'business', name: 'Copilot Business', price: 19, incl: 19 },
+  { id: 'enterprise', name: 'Copilot Enterprise', price: 39, incl: 39 },
+  { id: 'pro', name: 'Copilot Pro', price: 10, incl: 10 },
+  { id: 'proplus', name: 'Copilot Pro+', price: 39, incl: 39 },
+  { id: 'max', name: 'Copilot Max', price: 100, incl: 100 }
+];
+const WINDOWS = { day: { label: 'Day', days: 1 }, week: { label: 'Week', days: 5 }, month: { label: 'Month', days: 220 / 12 }, year: { label: 'Year', days: 220 } };
+const DAYS_PER_MONTH = 220 / 12;
+const USER_STEPS = [1, 2, 5, 10, 25, 50, 100, 200, 300, 500, 750, 1000, 1500, 2000, 2500, 3000];
+const ELEC_PRICE = 0.30; // $ per kWh at the desk, assumption
+function fUSD(v) {
+  if (!v) return '$0';
+  if (v >= 1e6) return '$' + fmt(v / 1e6, 2) + 'M';
+  if (v >= 1e4) return '$' + fmt(v / 1000, 1) + 'k';
+  if (v >= 100) return '$' + fmt(v, 0);
+  if (v >= 1) return '$' + fmt(v, 2);
+  if (v >= 0.01) return '$' + fmt(v, 3);
+  return '$' + fmt(v, 4);
+}
+const WI = Object.fromEntries(WORK.map((w, i) => [w.k, i]));
+const MODELS = {}; CLEER.forEach((m) => { MODELS[m[0]] = m; });
+const PROVIDERS = [...new Set(CLEER.map((m) => m[1]))].sort();
+const CLEER_PUE = 1.45;
+
+function localPerf(lm, dev) {
+  const eff = lm.moe ? lm.active * 1.3 : lm.active;
+  let fit = 'yes';
+  if (lm.mem > dev.mem) fit = (dev.ram && lm.mem <= dev.mem + dev.ram) ? 'offload' : 'no';
+  let dec = Math.min(dev.bw * 0.5 / (eff * 0.56), 250);
+  let pre = Math.min(dev.tf * 1e12 * 0.35 / (2 * eff * 1e9), 20000);
+  if (fit === 'offload') { dec /= 4; pre /= 1.5; }
+  return { fit, dec, pre };
+}
+function localSession(lm, dev, wk) {
+  const p = localPerf(lm, dev);
+  const tin = wk.agent ? wk.tin * 0.25 : wk.tin;
+  const secs = tin / p.pre + wk.tout / p.dec;
+  const wh = (dev.load - dev.office) * secs / 3600;
+  return Object.assign(p, { secs, wh });
+}
+const netWh = (wk) => ((wk.agent ? wk.tin * 0.25 : wk.tin) + wk.tout) * 4 / 1e6 * 0.03;
+function cloudSession(m, wk, gridId, ciV) {
+  const [it, emb] = m[5][WI[wk.k]];
+  const wh = it * GRIDS[gridId].pue;
+  return { wh, op: wh * ciV / 1000, emb, g: wh * ciV / 1000 + emb };
+}
+
+// =============== HERO + LINEAGE ===============
+function renderStatic() {
+  const ct = CLEER.map((m) => m[5][1][0] * CLEER_PUE);
+  const lo = Math.min(...ct), hi = Math.max(...ct);
+  const ratios = CLEER.map((m) => m[5][4][0] / m[5][1][0]).sort((a, b) => a - b);
+  const medRatio = ratios[Math.floor(ratios.length / 2)];
+  $('#heroStats').innerHTML = `
+    <div><b>≈${fmt(GRIDS.pl.avg / GRIDS.se.avg, 0)}×</b><span>more CO₂ per kWh on the Polish grid than the Swedish one</span></div>
+    <div><b>≈${fmt(hi / lo, 0)}×</b><span>energy spread between models for the same short chat</span></div>
+    <div><b>≈${fmt(medRatio, 0)}×</b><span>energy of an agent working session vs a short chat, same model</span></div>`;
+  $('#cleerFacts').innerHTML = `
+    <span class="label">AI inference, measured (CLEER)</span>
+    <h3 style="color:var(--paper)">What one session costs in a data center</h3>
+    <div class="grid2" style="gap:20px">
+      <div class="stat"><b>${fWh(lo)} to ${fWh(hi)}</b><span>for one short chat, smallest to largest of ${CLEER.length} models</span></div>
+      <div class="stat"><b>~${fmt(medRatio, 0)}×</b><span>an hour or two of agent work vs a short chat, median model</span></div>
+    </div>
+    <p style="font-size:14px;color:var(--soft)">CLEER benchmarks open models on known hardware, matches closed models to the closest proxies, and adds host servers, idle capacity, cooling and embodied carbon. Every model gets the same token workload, so differences reflect energy intensity, not verbosity.</p>`;
+  const types = ['se', 'nl', 'de', 'pl'];
+  const blurbs = {
+    se: 'Hydro and nuclear. Clean all day, every day. The hour barely matters.',
+    nl: 'Gas plus fast-growing wind and solar. Sunny, windy hours are far cleaner than calm evenings.',
+    de: 'Wind, solar, coal and gas. The biggest swings: a windy, sunny noon can be several times cleaner than a calm winter night.',
+    pl: 'Coal-heavy. Even the best hour stays high. Location helps far more than timing.'
+  };
+  const path = (id, season, wind) => {
+    const pts = [];
+    for (let h = 0; h <= 24; h += 0.5) {
+      const c = Math.min(ci(id, h, season, wind), 800);
+      pts.push((h === 0 ? 'M' : 'L') + (h / 24 * 280).toFixed(1) + ' ' + (92 - c / 800 * 88).toFixed(1));
+    }
+    return pts.join(' ');
+  };
+  $('#gridTypes').innerHTML = types.map((id) => {
+    const g = GRIDS[id];
+    return `<div class="card stack" style="gap:12px">
+      <span class="pill ${typeClass(g.type)}" style="align-self:flex-start">${g.type}</span>
+      <div><div style="font-size:20px;font-weight:700">Azure ${g.azure}</div><div class="note" style="font-size:14px">${g.city} · ${g.country} grid</div></div>
+      <div style="display:flex;align-items:baseline;gap:10px"><span class="big" style="font-size:48px">${g.avg}</span><span class="note" style="font-size:14px;line-height:1.3">g CO₂/kWh<br>2025 average</span></div>
+      <svg viewBox="0 0 280 96" width="100%" height="96" aria-hidden="true"><line x1="0" y1="92" x2="280" y2="92" stroke="#9AA6A1"/><line x1="0" y1="48" x2="280" y2="48" stroke="#DDE3E0"/>
+      <path d="${path(id, 'winter', 'calm')}" fill="none" stroke="${g.color}" stroke-width="2" stroke-dasharray="4 4"/><path d="${path(id, 'summer', 'normal')}" fill="none" stroke="${g.color}" stroke-width="3"/></svg>
+      <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:-6px"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+      <p style="font-size:15px;color:var(--ink2)">${blurbs[id]}</p></div>`;
+  }).join('');
+}
+
+// =============== 2 · GRID SIMULATOR ===============
+const G = { hour: 14, season: 'summer', wind: 'normal', hw: 'h100', gpuHours: 1000, dur: 4, sel: { se: true, nl: true, de: true, pl: true }, playing: false, timer: null };
+function renderGridSim() {
+  const S = SEASONS[G.season];
+  const hw = HW.find((x) => x.id === G.hw);
+  const itKwh = G.gpuHours * 0.7 * hw.rel * 1.3;
+  const fkg = (v) => v >= 1000 ? fmt(v / 1000, 1) + ' t' : fmt(v, v < 10 ? 1 : 0) + ' kg';
+  const count = AZURE.filter((id) => G.sel[id]).length;
+
+  $('#gRegions').innerHTML = AZURE.map((id) => `<button type="button" class="btn" data-id="${id}" aria-pressed="${!!G.sel[id]}"><span class="dot" style="background:${GRIDS[id].color}"></span>${GRIDS[id].azure}</button>`).join('');
+  $('#gRegions').onclick = (e) => { const b = e.target.closest('button[data-id]'); if (!b) return; const id = b.dataset.id; if (G.sel[id] && count === 1) return; G.sel[id] = !G.sel[id]; renderGridSim(); };
+  seg($('#gSeason'), Object.entries(SEASONS).map(([v, s]) => ({ v, label: s.label })), G.season, (v) => { G.season = v; renderGridSim(); });
+  seg($('#gWind'), Object.entries(WINDS).map(([v, s]) => ({ v, label: s.label })), G.wind, (v) => { G.wind = v; renderGridSim(); });
+  $('#gHw').innerHTML = HW.map((x) => `<button type="button" class="btn" data-v="${x.id}" aria-pressed="${G.hw === x.id}"><span>${x.name}<small>${x.kind}</small></span><span class="mono">${fmt(x.rel, x.rel >= 10 ? 0 : 2)}×</span></button>`).join('');
+  $('#gHw').onclick = (e) => { const b = e.target.closest('button[data-v]'); if (b) { G.hw = b.dataset.v; renderGridSim(); } };
+  $('#gHour').value = G.hour; $('#gHourVal').textContent = hh(G.hour);
+  $('#gSize').value = G.gpuHours; $('#gSizeVal').textContent = fmt(G.gpuHours) + ' H100-h';
+  $('#gDur').value = G.dur; $('#gDurVal').textContent = G.dur + (G.dur === 1 ? ' hour' : ' hours');
+  $('#gPlay').textContent = G.playing ? 'Pause' : 'Play the day';
+  $('#gIt').textContent = itKwh >= 10000 ? fmt(itKwh / 1000, 1) + ' MWh' : fmt(itKwh) + ' kWh';
+  $('#gItNote').textContent = `${fmt(G.gpuHours)} H100-hours of work × 0.7 kW × ${fmt(hw.rel, 2)}× chip energy × 1.3 server overhead. Each region then adds its PUE.`;
+  const isDay = G.hour >= S.rise && G.hour < S.set;
+  $('#gClockNote').textContent = `${hh(G.hour)} CET · ${isDay ? 'daytime, sun up' : 'night, sun down'}`;
+
+  const X = (h) => 56 + h / 24 * 888, Y = (c) => 320 - Math.min(c, 800) / 800 * 296;
+  const data = AZURE.filter((id) => G.sel[id]).map((id) => {
+    const g = GRIDS[id];
+    const curve = []; for (let h = 0; h < 24; h++) curve.push(ci(id, h, G.season, G.wind));
+    const fac = itKwh * g.pue;
+    const emis = (s) => { let sum = 0; for (let k = 0; k < G.dur; k++) sum += curve[(s + k) % 24]; return fac / G.dur * sum / 1000; };
+    const all = []; for (let s = 0; s < 24; s++) all.push(emis(s));
+    let bestH = 0; for (let s = 1; s < 24; s++) if (all[s] < all[bestH]) bestH = s;
+    const pts = []; for (let h = 0; h <= 24; h += 0.5) pts.push((h === 0 ? 'M' : 'L') + X(h).toFixed(1) + ' ' + Y(ci(id, h, G.season, G.wind)).toFixed(1));
+    return { id, g, curve, now: all[G.hour], best: all[bestH], bestH, mn: Math.min(...curve), mx: Math.max(...curve), ciNow: curve[G.hour], d: pts.join(' ') };
+  });
+
+  $('#gLegend').innerHTML = data.map((x) => `<span><i class="sw" style="background:${x.g.color};height:4px;width:18px"></i>${x.g.azure}</span>`).join('');
+  const endH = G.hour + G.dur;
+  const wins = endH <= 24 ? [[X(G.hour), X(endH) - X(G.hour)]] : [[X(G.hour), X(24) - X(G.hour)], [X(0), X(endH - 24) - X(0)]];
+  let svg = `<svg viewBox="0 0 960 360" style="width:100%;height:auto;display:block" role="img" aria-label="Hourly grid carbon intensity for the selected Azure regions">`;
+  svg += `<rect x="${X(0)}" y="24" width="${X(S.rise) - X(0)}" height="296" fill="#DDE3E0"/><rect x="${X(S.set)}" y="24" width="${X(24) - X(S.set)}" height="296" fill="#DDE3E0"/>`;
+  wins.forEach(([x, w]) => { svg += `<rect x="${x}" y="24" width="${w}" height="296" fill="#0F766E" fill-opacity=".10" stroke="#0F766E" stroke-opacity=".6" stroke-dasharray="4 4"/>`; });
+  [0, 200, 400, 600, 800].forEach((v) => { svg += `<line x1="56" x2="944" y1="${Y(v)}" y2="${Y(v)}" stroke="${v ? '#C9D1CD' : '#4A5752'}"/><text x="46" y="${Y(v) + 4}" text-anchor="end" font-size="12" fill="#4A5752">${v}</text>`; });
+  for (let i = 0; i <= 8; i++) svg += `<text x="${X(i * 3)}" y="344" text-anchor="middle" font-size="12" fill="#4A5752">${String(i * 3).padStart(2, '0')}</text>`;
+  svg += `<text x="60" y="16" font-size="12" fill="#4A5752">g CO₂/kWh</text>`;
+  data.forEach((x) => { svg += `<path d="${x.d}" fill="none" stroke="${x.g.color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`; });
+  svg += `<line x1="${X(G.hour)}" x2="${X(G.hour)}" y1="24" y2="320" stroke="#14201B" stroke-width="1.5"/>`;
+  data.forEach((x) => { svg += `<circle cx="${X(G.hour)}" cy="${Y(x.ciNow)}" r="6" fill="${x.g.color}" stroke="#fff" stroke-width="2"/>`; });
+  $('#gChart').innerHTML = svg + '</svg>';
+
+  const byNow = data.slice().sort((a, b) => a.now - b.now);
+  const clean = byNow[0], dirty = byNow[byNow.length - 1];
+  let shift = byNow[0]; data.forEach((x) => { if (1 - x.best / x.now > 1 - shift.best / shift.now) shift = x; });
+  const shiftPct = Math.round((1 - shift.best / shift.now) * 100);
+  let bestAll = data[0]; data.forEach((x) => { if (x.best < bestAll.best) bestAll = x; });
+  $('#gStats').innerHTML = `
+    <div class="stat"><b style="color:var(--mint)">${byNow.length > 1 ? fmt(dirty.now / clean.now, 1) + '×' : '1.0×'}</b><span>${byNow.length > 1 ? `more CO₂ in ${dirty.g.azure} than in ${clean.g.azure} for this job, starting ${hh(G.hour)}.` : 'Select two or more regions to compare.'}</span></div>
+    <div class="stat"><b style="color:var(--gold)">${shiftPct}%</b><span>${shiftPct > 0 ? `saved by moving the start to ${hh(shift.bestH)} in ${shift.g.azure}. Timing matters most in dynamic grids.` : 'Already at the best hour. No gain from waiting.'}</span></div>
+    <div class="stat"><b>${fkg(bestAll.best)}</b><span>cleanest option: ${bestAll.g.azure}, starting ${hh(bestAll.bestH)}.</span></div>`;
+
+  const status = (c) => c < 100 ? 'Low carbon' : c < 300 ? 'Moderate' : c < 500 ? 'High' : 'Very high';
+  $('#gCards').innerHTML = data.map((x) => `<article class="card stack" style="padding:20px;gap:12px">
+    <div class="row" style="align-items:center"><span class="pill ${typeClass(x.g.type)}">${x.g.type}</span><span class="dot" style="background:${x.g.color};width:14px;height:14px"></span></div>
+    <div><div style="font-size:18px;font-weight:700">${x.g.azure}</div><div class="note">${x.g.city} · ${x.g.country} grid</div></div>
+    <div style="display:flex;align-items:baseline;gap:8px"><span class="big">${fmt(x.ciNow)}</span><span class="note" style="line-height:1.3">g/kWh now<br>${status(x.ciNow)}</span></div>
+    <div class="stack" style="gap:6px;font-size:14px;border-top:1px solid var(--line2);padding-top:12px">
+      <div class="row"><span class="note" style="font-size:14px">Day range</span><span class="mono">${fmt(x.mn)} to ${fmt(x.mx)}</span></div>
+      <div class="row"><span class="note" style="font-size:14px">Swing</span><span class="mono">${fmt(x.mx / x.mn, 1)}×</span></div>
+      <div class="row"><span class="note" style="font-size:14px">Job, start ${hh(G.hour)}</span><span class="mono" style="font-weight:600">${fkg(x.now)}</span></div>
+      <div class="row"><span class="note" style="font-size:14px">Best start ${hh(x.bestH)}</span><span class="mono" style="font-weight:600;color:var(--teal-d)">${fkg(x.best)}${x.now > x.best ? ' (−' + Math.round((1 - x.best / x.now) * 100) + '%)' : ''}</span></div>
+    </div></article>`).join('');
+
+  const maxNow = Math.max(...data.map((x) => x.now), 1e-6);
+  $('#gBars').innerHTML = byNow.map((x) => `<div class="stack" style="gap:6px">
+    <div class="row" style="font-size:15px"><span>${x.g.azure}</span><span class="mono" style="font-weight:600">${fkg(x.now)} <span style="font-weight:400;color:var(--muted)">· best ${fkg(x.best)}</span></span></div>
+    <div class="bar"><i style="width:${Math.max(.6, x.now / maxNow * 100)}%;background:${x.g.color}"></i></div>
+    <div class="bar thin"><i style="width:${Math.max(.6, x.best / maxNow * 100)}%;background:#9AA6A1"></i></div></div>`).join('');
+}
+function bindGridSim() {
+  $('#gHour').oninput = (e) => { G.hour = Number(e.target.value); renderGridSim(); };
+  $('#gSize').oninput = (e) => { G.gpuHours = Number(e.target.value); renderGridSim(); };
+  $('#gDur').oninput = (e) => { G.dur = Number(e.target.value); renderGridSim(); };
+  $('#gPlay').onclick = () => {
+    if (G.playing) { clearInterval(G.timer); G.playing = false; }
+    else { G.timer = setInterval(() => { G.hour = (G.hour + 1) % 24; renderGridSim(); }, 700); G.playing = true; }
+    renderGridSim();
+  };
+}
+
+// =============== SHARED SETUP ===============
+const U = {
+  device: 'mbp', userGrid: 'nl', cloud: 'nl', season: 'spring', wind: 'normal', embodied: false,
+  cmpWork: 'CT', cmpMetric: 'co2',
+  cmpCloud: new Set(['Claude Opus 5', 'Claude Sonnet 5', 'Claude Haiku 4.5', 'GPT-5.5', 'GPT-5 nano', 'Gemini 3.7 Flash', 'DeepSeek V4 Pro', 'GPT-OSS-20B']),
+  cmpLocal: new Set(['goss20', 'q30', 'l70']),
+  mode: 'cloud', cloudModel: 'Claude Sonnet 5', localModel: 'goss20',
+  window: 'month', users: 1, costModel: 'api', cacheHit: 0.8, claudePlan: 'team_std', billing: 'annual', cpPlan: 'business', cpFromBill: false, cpOverage: 0,
+  start: 9, end: 17, chats: 20, chatTier: 'CT', agents: 2, agentTier: 'AT', dayMetric: 'co2'
+};
+const dev = () => DEVICES.find((d) => d.id === U.device);
+function workMeanCI(id, u = U) { let s = 0, n = 0; for (let h = u.start; h < u.end; h++) { s += ci(id, h + 0.5, u.season, u.wind); n++; } return n ? s / n : ci(id, 12, u.season, u.wind); }
+
+function renderSetup() {
+  const d = dev();
+  $('#uDevice').innerHTML = DEVICES.map((x) => `<option value="${x.id}" ${x.id === U.device ? 'selected' : ''}>${esc(x.name)}</option>`).join('');
+  $('#uDeviceNote').textContent = `~${d.office} W in normal use · ~${d.load} W running AI · ${d.mem} GB for models`;
+  const userIds = ['nl', 'nlsolar', 'de', 'se', 'fr', 'uk', 'es', 'pl'];
+  $('#uGrid').innerHTML = userIds.map((id) => `<option value="${id}" ${id === U.userGrid ? 'selected' : ''}>${esc(GRIDS[id].country)}</option>`).join('');
+  $('#uGridNote').textContent = `≈${fmt(workMeanCI(U.userGrid))} g CO₂/kWh during your work hours`;
+  const cloudIds = [...AZURE, 'gas'];
+  $('#uCloud').innerHTML = cloudIds.map((id) => `<option value="${id}" ${id === U.cloud ? 'selected' : ''}>${esc(cloudName(id))}</option>`).join('');
+  $('#uCloudNote').textContent = `≈${fmt(workMeanCI(U.cloud))} g CO₂/kWh during your work hours · PUE ${fmt(GRIDS[U.cloud].pue, 2)}`;
+  seg($('#uSeason'), Object.entries(SEASONS).map(([v, s]) => ({ v, label: s.label })), U.season, (v) => { U.season = v; renderAll(); });
+  seg($('#uWind'), Object.entries(WINDS).map(([v, s]) => ({ v, label: s.label })), U.wind, (v) => { U.wind = v; renderAll(); });
+  $('#uEmb').checked = U.embodied;
+  $('#uCache').value = Math.round(U.cacheHit * 100); $('#uCacheVal').textContent = fmt(U.cacheHit * 100) + '%';
+}
+
+// =============== 3 · COMPARE ===============
+function renderCompare() {
+  const d = dev();
+  const wk = WORK[WI[U.cmpWork]];
+  $('#cWork').innerHTML = WORK.map((w) => `<button type="button" class="btn" data-v="${w.k}" aria-pressed="${w.k === U.cmpWork}"><span>${w.label}<small>${w.desc}</small></span></button>`).join('');
+  $('#cWork').onclick = (e) => { const b = e.target.closest('button[data-v]'); if (b) { U.cmpWork = b.dataset.v; renderCompare(); } };
+  seg($('#cMetric'), [{ v: 'co2', label: 'CO₂e' }, { v: 'energy', label: 'Energy' }, { v: 'cost', label: 'Cost' }], U.cmpMetric, (v) => { U.cmpMetric = v; renderCompare(); });
+
+  if (!$('#cCloud').dataset.built) {
+    $('#cCloud').innerHTML = PROVIDERS.map((p) => `<h4>${esc(p)}</h4>` + CLEER.filter((m) => m[1] === p).map((m) => `<label class="chk"><input type="checkbox" data-m="${esc(m[0])}">${esc(m[0])}<em>${m[2] === 'Open' ? 'open' : ''}</em></label>`).join('')).join('');
+    $('#cCloud').onchange = (e) => { const m = e.target.dataset.m; if (!m) return; e.target.checked ? U.cmpCloud.add(m) : U.cmpCloud.delete(m); renderCompare(); };
+    $('#cCloud').dataset.built = '1';
+  }
+  $('#cCloud').querySelectorAll('input').forEach((i) => { i.checked = U.cmpCloud.has(i.dataset.m); });
+  $('#cLocal').innerHTML = LOCAL.map((l) => { const p = localPerf(l, d); return `<label class="chk"><input type="checkbox" data-l="${l.id}" ${U.cmpLocal.has(l.id) ? 'checked' : ''}>${esc(l.name)}<em>${p.fit === 'no' ? "won't fit" : p.fit === 'offload' ? 'slow, offload' : fmt(l.mem) + ' GB'}</em></label>`; }).join('');
+  $('#cLocal').onchange = (e) => { const id = e.target.dataset.l; if (!id) return; e.target.checked ? U.cmpLocal.add(id) : U.cmpLocal.delete(id); renderCompare(); };
+
+  const ciC = workMeanCI(U.cloud), ciU = workMeanCI(U.userGrid);
+  const rows = [];
+  U.cmpCloud.forEach((name) => {
+    const m = MODELS[name]; if (!m) return;
+    const r = cloudSession(m, wk, U.cloud, ciC);
+    rows.push({ type: 'cloud', name, meta: `Cloud · ${cloudName(U.cloud)} · ${m[3]}${m[4] != null ? ' · capability ' + m[4] : ''}${m[6] ? ' · $' + fmt(m[6][0], 2) + ' / $' + fmt(m[6][1], 2) + ' per M tokens in/out' : ''}`, wh: r.wh, op: r.op, emb: r.emb, g: r.g, usd: sessionCost(m, wk, U.cacheHit), usdRaw: sessionCost(m, wk, 0), ok: true });
+  });
+  U.cmpLocal.forEach((id) => {
+    const l = LOCAL.find((x) => x.id === id); const L = localSession(l, d, wk);
+    const cm = l.cleer && MODELS[l.cleer];
+    const g = L.wh * ciU / 1000;
+    rows.push({ type: 'local', name: l.name + ' (local)', meta: L.fit === 'no' ? `Needs ~${l.mem} GB, your device has ${d.mem} GB for models` : `Local · ${d.name.split(' (')[0].split(',')[0]} · ~${fTime(L.secs)} · ${fmt(L.dec)} tok/s${L.fit === 'offload' ? ' · partly offloaded, slow' : ''}${cm && cm[4] != null ? ' · capability ' + cm[4] : ''}`, wh: L.wh, op: g, emb: 0, g, usd: L.wh / 1000 * ELEC_PRICE, usdRaw: L.wh / 1000 * ELEC_PRICE, ok: L.fit !== 'no' });
+  });
+  const val = (r) => U.cmpMetric === 'co2' ? r.g : U.cmpMetric === 'cost' ? r.usd : r.wh;
+  const show = (r) => U.cmpMetric === 'co2' ? fG(r.g) : U.cmpMetric === 'cost' ? fUSD(r.usd) : fWh(r.wh);
+  const showSub = (r) => U.cmpMetric === 'cost' ? (r.type === 'cloud' ? 'no cache ' + fUSD(r.usdRaw) : 'electricity only') : U.cmpMetric === 'co2' ? fWh(r.wh) + ' · ' + fUSD(r.usd) : fG(r.g) + ' · ' + fUSD(r.usd);
+  rows.sort((a, b) => (b.ok - a.ok) || (val(a) - val(b)));
+  const max = Math.max(...rows.filter((r) => r.ok).map(val), 1e-9);
+  $('#cTitle').textContent = `${wk.label}: ${U.cmpMetric === 'co2' ? 'CO₂e' : U.cmpMetric === 'cost' ? 'API cost (with ' + fmt(U.cacheHit * 100) + '% cache hits)' : 'energy'} per session`;
+  $('#cRows').innerHTML = rows.length ? rows.map((r) => {
+    let bar = '';
+    if (r.ok) {
+      if (U.cmpMetric === 'co2' && r.type === 'cloud') bar = `<i style="width:${r.op / max * 100}%;background:var(--c-dc)"></i><i style="width:${r.emb / max * 100}%;background:var(--c-emb)"></i>`;
+      else bar = `<i style="width:${Math.max(.5, val(r) / max * 100)}%;background:${r.type === 'cloud' ? 'var(--c-dc)' : 'var(--c-local)'}"></i>`;
+    }
+    const main = r.ok ? show(r) : '—';
+    const sub = r.ok ? showSub(r) : "won't fit";
+    return `<div class="cmp-row ${r.ok ? '' : 'off'}"><div><div class="nm">${esc(r.name)} <span class="pill ${r.type === 'cloud' ? 't-cloud' : 't-local'}" style="margin-left:4px">${r.type}</span></div><div class="meta">${esc(r.meta)}</div></div><div class="bwrap"><div class="bar">${bar}</div></div><div class="num">${main}<small>${sub}</small></div></div>`;
+  }).join('') : '<p class="note">Pick at least one model on the left.</p>';
+
+  const ok = rows.filter((r) => r.ok);
+  const cl = ok.filter((r) => r.type === 'cloud'), lc = ok.filter((r) => r.type === 'local');
+  const mn = ok.length ? ok.reduce((a, b) => val(a) < val(b) ? a : b) : null;
+  const mx = ok.length ? ok.reduce((a, b) => val(a) > val(b) ? a : b) : null;
+  let s3 = '<b>—</b><span>Select a cloud and a local model to compare them head to head.</span>';
+  if (cl.length && lc.length) {
+    const c0 = cl.reduce((a, b) => a.wh < b.wh ? a : b), l0 = lc.reduce((a, b) => a.wh < b.wh ? a : b);
+    s3 = `<b style="color:var(--gold)">${fmt(l0.wh / c0.wh, 1)}×</b><span>energy of the most efficient local pick (${esc(l0.name.replace(' (local)', ''))}) vs the most efficient cloud pick (${esc(c0.name)}). Data centers batch many users per chip.</span>`;
+  }
+  $('#cStats').innerHTML = `
+    <div class="stat"><b style="color:var(--mint)">${mn && mx ? fmt(val(mx) / val(mn), 0) + '×' : '—'}</b><span>${mn && mx ? `spread between ${esc(mn.name)} and ${esc(mx.name)} for this workload.` : 'Pick models to compare.'}</span></div>
+    <div class="stat">${s3}</div>
+    <div class="stat"><b>${fmt(ciU)} / ${fmt(ciC)}</b><span>g CO₂/kWh at your desk (${esc(GRIDS[U.userGrid].country)}) and in the cloud (${esc(cloudName(U.cloud))}) during work hours.</span></div>`;
+}
+
+// =============== 4 · WORKDAY ===============
+function simulateDay(mode, ov) {
+  const u = Object.assign({}, U, ov || {});
+  const d = DEVICES.find((x) => x.id === u.device);
+  const z = () => new Array(24).fill(0);
+  const r = { eDesk: z(), eLocal: z(), eDC: z(), gDesk: z(), gLocal: z(), gDC: z(), gEmbC: z(), gEmbD: z(), eIT: 0, eOH: 0, eNet: 0, infeasible: false, localSecs: 0, sessions: 0, usd: 0, usdRaw: 0, mode };
+  const ciU = (h) => ci(u.userGrid, h + 0.5, u.season, u.wind), ciC = (h) => ci(u.cloud, h + 0.5, u.season, u.wind);
+  const inWork = (h) => h >= u.start && h < u.end;
+  const devEmbH = d.emb * 1000 / (4 * 1760);
+  for (let h = u.start; h < u.end; h++) {
+    r.eDesk[h] += d.office; r.gDesk[h] += d.office * ciU(h) / 1000;
+    if (u.embodied) r.gEmbD[h] += devEmbH;
+  }
+  const spread = (t0, dur, cb) => {
+    if (dur <= 1e-9) { cb(((Math.floor(t0) % 24) + 24) % 24, 0); return; }
+    let t = t0, left = dur, guard = 0;
+    while (left > 1e-9 && guard++ < 5000) { const hi = Math.floor(t); const take = Math.min(left, hi + 1 - t); cb(((hi % 24) + 24) % 24, take); t += take; left -= take; }
+  };
+  const span = Math.max(1, u.end - u.start);
+  const sess = [];
+  for (let i = 0; i < u.chats; i++) sess.push({ k: u.chatTier, t: u.start + (i + 0.5) * span / u.chats });
+  for (let j = 0; j < u.agents; j++) sess.push({ k: u.agentTier, t: u.start + 0.25 + j * span / u.agents });
+  const cm = MODELS[u.cloudModel], lm = LOCAL.find((x) => x.id === u.localModel);
+  sess.forEach((s) => {
+    const wk = WORK[WI[s.k]]; r.sessions++;
+    if (mode === 'cloud') {
+      const [it, emb] = cm[5][WI[s.k]];
+      const wh = it * GRIDS[u.cloud].pue, net = netWh(wk), dur = wk.mins / 60;
+      r.eIT += it; r.eOH += wh - it; r.eNet += net;
+      r.usd += sessionCost(cm, wk, u.cacheHit); r.usdRaw += sessionCost(cm, wk, 0);
+      spread(s.t, dur, (h, take) => { const f = dur > 0 ? take / dur : 1; r.eDC[h] += wh * f; r.gDC[h] += wh * f * ciC(h) / 1000; });
+      const h0 = ((Math.floor(s.t) % 24) + 24) % 24;
+      r.eDC[h0] += net; r.gDC[h0] += net * ciU(h0) / 1000; r.gEmbC[h0] += emb;
+    } else {
+      const L = localSession(lm, d, wk);
+      if (L.fit === 'no') { r.infeasible = true; return; }
+      r.localSecs += L.secs;
+      spread(s.t, L.secs / 3600, (h, take) => { const w = inWork(h) ? d.load - d.office : d.load; const e = w * take; r.eLocal[h] += e; r.gLocal[h] += e * ciU(h) / 1000; });
+    }
+  });
+  r.u = u; r.d = d;
+  return finalize(r);
+}
+function finalize(r) {
+  const sum = (a) => a.reduce((x, y) => x + y, 0);
+  r.gEmb = r.gEmbC.map((v, i) => v + r.gEmbD[i]);
+  r.gEmbCloud = sum(r.gEmbC); r.gEmbDev = sum(r.gEmbD);
+  r.E = { desk: sum(r.eDesk), local: sum(r.eLocal), dc: sum(r.eDC) };
+  r.Gs = { desk: sum(r.gDesk), local: sum(r.gLocal), dc: sum(r.gDC), emb: sum(r.gEmb) };
+  r.Etot = r.E.desk + r.E.local + r.E.dc;
+  r.Gtot = r.Gs.desk + r.Gs.local + r.Gs.dc + r.Gs.emb;
+  return r;
+}
+// multiply the cloud part of a day by k (used when a Copilot bill sets the volume)
+function scaleCloud(r, k) {
+  if (k === 1) return r;
+  const c = Object.assign({}, r);
+  ['eDC', 'gDC', 'gEmbC', 'eLocal', 'gLocal'].forEach((key) => { c[key] = r[key].map((v) => v * k); });
+  ['eIT', 'eOH', 'eNet', 'usd', 'usdRaw', 'sessions', 'localSecs'].forEach((key) => { c[key] = r[key] * k; });
+  return finalize(c);
+}
+// cost of a scenario over the chosen window for all users
+function costFor(R, n, days) {
+  const months = days / DAYS_PER_MONTH;
+  const api = R.usd * n * days, apiRaw = R.usdRaw * n * days;
+  const elec = (R.E.desk + R.E.local) / 1000 * ELEC_PRICE * n * days;
+  const o = { api, apiRaw, elec, total: 0, label: '', lines: [] };
+  if (R.mode === 'local') { o.total = 0; o.label = 'AI cost: no API or subscription'; return o; }
+  if (U.costModel === 'api') {
+    o.total = api; o.label = 'API pay-as-you-go';
+    o.lines.push(`Without caching: ${fUSD(apiRaw)}${apiRaw > 0 ? ' (caching saves ' + fmt((1 - api / apiRaw) * 100) + '%)' : ''}`);
+  } else if (U.costModel === 'claude') {
+    const p = CLAUDE_PLANS.find((x) => x.id === U.claudePlan);
+    const seat = U.billing === 'annual' ? p.a : p.m;
+    const subs = n * seat * months;
+    o.total = subs + (p.usage ? api : 0);
+    o.label = `${n} × ${p.name} at $${seat}/month${p.usage ? ' + API usage' : ''}`;
+    o.lines.push(`Same usage at API rates: ${fUSD(api)}`);
+  } else {
+    const p = COPILOT.find((x) => x.id === U.cpPlan);
+    const base = n * p.price * months, incl = n * p.incl * months;
+    const over = Math.max(0, api - incl);
+    o.total = base + over;
+    o.label = `${n} × ${p.name} at $${p.price}/month (incl. $${p.incl} AI credits each)`;
+    o.lines.push(`Extra AI credits beyond included: ${fUSD(over)}`);
+    o.lines.push(`Token usage at API rates: ${fUSD(api)}`);
+  }
+  return o;
+}
+const ciColor = (c) => {
+  const st = [[0, [226, 243, 239]], [100, [159, 211, 197]], [250, [230, 182, 90]], [450, [192, 96, 42]], [650, [107, 31, 20]]];
+  for (let i = 1; i < st.length; i++) if (c <= st[i][0]) { const [a, ca] = st[i - 1], [b, cb] = st[i]; const t = (c - a) / (b - a); return `rgb(${ca.map((v, k) => Math.round(v + (cb[k] - v) * t)).join(',')})`; }
+  return 'rgb(107,31,20)';
+};
+
+function renderWorkday() {
+  const d = dev();
+  const W = WINDOWS[U.window], N = U.users, S = W.days * N;
+  const who = N === 1 ? '1 person' : fmt(N) + ' people';
+  const per = `${W.label.toLowerCase()} for ${who}`;
+  $('#wSetup').innerHTML = `<b>${esc(d.name)}</b> in ${esc(GRIDS[U.userGrid].country)} · cloud in ${esc(cloudName(U.cloud))} · ${SEASONS[U.season].label.toLowerCase()}, ${WINDS[U.wind].label.toLowerCase()} wind · ${fmt(U.cacheHit * 100)}% cache hits. <a href="#setup">Change setup</a>`;
+  seg($('#wWindow'), Object.entries(WINDOWS).map(([v, w]) => ({ v, label: w.label })), U.window, (v) => { U.window = v; renderWorkday(); });
+  const si = USER_STEPS.reduce((best, v, i) => Math.abs(v - N) < Math.abs(USER_STEPS[best] - N) ? i : best, 0);
+  $('#wUsers').value = si;
+  if (document.activeElement !== $('#wUsersNum')) $('#wUsersNum').value = N;
+  seg($('#wMode'), [{ v: 'cloud', label: 'Cloud model' }, { v: 'local', label: 'Local model' }], U.mode, (v) => { U.mode = v; renderWorkday(); });
+  $('#wCloudBox').style.display = U.mode === 'cloud' ? '' : 'none';
+  $('#wLocalBox').style.display = U.mode === 'local' ? '' : 'none';
+  $('#wCostBox').style.display = U.mode === 'cloud' ? '' : 'none';
+  if (!$('#wCloudModel').dataset.built) {
+    $('#wCloudModel').innerHTML = PROVIDERS.map((p) => `<optgroup label="${esc(p)}">` + CLEER.filter((m) => m[1] === p).map((m) => `<option value="${esc(m[0])}">${esc(m[0])}</option>`).join('') + '</optgroup>').join('');
+    $('#wClaudePlan').innerHTML = CLAUDE_PLANS.map((p) => `<option value="${p.id}">${esc(p.name)} · $${p.m}/mo${p.a !== p.m ? ' ($' + p.a + ' annual)' : ''}</option>`).join('');
+    $('#wCpPlan').innerHTML = COPILOT.map((p) => `<option value="${p.id}">${esc(p.name)} · $${p.price}/user/mo</option>`).join('');
+    $('#wCloudModel').dataset.built = '1';
+  }
+  $('#wCloudModel').value = U.cloudModel;
+  $('#wClaudePlan').value = U.claudePlan; $('#wCpPlan').value = U.cpPlan;
+  seg($('#wCost'), [{ v: 'api', label: 'API' }, { v: 'claude', label: 'Claude plan' }, { v: 'copilot', label: 'Copilot' }], U.costModel, (v) => { U.costModel = v; renderWorkday(); });
+  seg($('#wBilling'), [{ v: 'annual', label: 'Annual' }, { v: 'monthly', label: 'Monthly' }], U.billing, (v) => { U.billing = v; renderWorkday(); });
+  $('#wCostApi').style.display = U.costModel === 'api' ? '' : 'none';
+  $('#wCostClaude').style.display = U.costModel === 'claude' ? '' : 'none';
+  $('#wCostCopilot').style.display = U.costModel === 'copilot' ? '' : 'none';
+  $('#wCpBill').checked = U.cpFromBill;
+  $('#wCpBillBox').style.display = U.cpFromBill ? '' : 'none';
+  if (document.activeElement !== $('#wCpOver')) $('#wCpOver').value = U.cpOverage;
+  $('#wLocalModel').innerHTML = LOCAL.map((l) => { const p = localPerf(l, d); return `<option value="${l.id}" ${l.id === U.localModel ? 'selected' : ''}>${esc(l.name)}${p.fit === 'no' ? " (won't fit)" : p.fit === 'offload' ? ' (slow, offloaded)' : ''}</option>`; }).join('');
+  $('#wStart').innerHTML = [6, 7, 8, 9, 10, 11, 12].map((h) => `<option value="${h}" ${h === U.start ? 'selected' : ''}>${hh(h)}</option>`).join('');
+  $('#wEnd').innerHTML = [13, 14, 15, 16, 17, 18, 19, 20, 21, 22].map((h) => `<option value="${h}" ${h === U.end ? 'selected' : ''}>${hh(h)}</option>`).join('');
+  $('#wChats').value = U.chats; $('#wChatsVal').textContent = U.chats;
+  $('#wAgents').value = U.agents; $('#wAgentsVal').textContent = U.agents;
+  seg($('#wChatTier'), WORK.filter((w) => !w.agent).map((w) => ({ v: w.k, label: w.short })), U.chatTier, (v) => { U.chatTier = v; renderWorkday(); });
+  seg($('#wAgentTier'), WORK.filter((w) => w.agent).map((w) => ({ v: w.k, label: w.short })), U.agentTier, (v) => { U.agentTier = v; renderWorkday(); });
+  seg($('#wMetric'), [{ v: 'co2', label: 'CO₂e' }, { v: 'energy', label: 'Energy' }], U.dayMetric, (v) => { U.dayMetric = v; renderWorkday(); });
+
+  // simulate one person, one day
+  let Rc0 = simulateDay('cloud');
+  let k = 1;
+  const billMode = U.mode === 'cloud' && U.costModel === 'copilot' && U.cpFromBill;
+  if (billMode) {
+    const p = COPILOT.find((x) => x.id === U.cpPlan);
+    const target = (N * p.incl + U.cpOverage) / (N * DAYS_PER_MONTH); // $ per person per workday
+    k = Rc0.usd > 0 ? target / Rc0.usd : 0;
+  }
+  const Rc = scaleCloud(Rc0, k);
+  const Rl = scaleCloud(simulateDay('local'), k);
+  const R = U.mode === 'cloud' ? Rc : Rl;
+  const co2 = U.dayMetric === 'co2';
+  $('#wEmbLeg').style.display = co2 ? '' : 'none';
+  const lm = LOCAL.find((x) => x.id === U.localModel);
+  const cm = MODELS[U.cloudModel];
+
+  let warn = '';
+  if (U.mode === 'local' && R.infeasible) warn += `<div class="warn">${esc(lm.name)} needs about ${lm.mem} GB but this device has ${d.mem} GB for models. Pick a smaller model or a bigger machine.</div>`;
+  if (U.mode === 'cloud' && U.costModel === 'claude' && cm[1] !== 'Anthropic') warn += `<div class="warn">Claude plans only cover Claude models. Pick a Claude model, or switch to API or Copilot.</div>`;
+  if (U.mode === 'cloud' && billMode) warn += `<div class="warn" style="background:#D3EEE9;color:#0B5B50">Usage set from your bill: ≈${fmt(U.chats * k, 1)} chats and ${fmt(U.agents * k, 2)} agent runs per person per day (your sliders set the mix, the bill sets the volume).</div>`;
+  $('#wWarn').innerHTML = warn;
+
+  // stats over window and people
+  const cost = costFor(R, N, W.days);
+  $('#wStats').innerHTML = `
+    <div class="stat"><b style="color:var(--gold)">${fWh(R.Etot * S)}</b><span>energy per ${per}, both grids. Per person per day: ${fWh(R.Etot)}.</span></div>
+    <div class="stat"><b style="color:var(--mint)">${fG(R.Gtot * S)}</b><span>CO₂e per ${per}${U.embodied ? ', incl. device manufacturing' : ''}. Per person per day: ${fG(R.Gtot)}.</span></div>
+    <div class="stat"><b>${fUSD(cost.total)}</b><span>${esc(cost.label)}${cost.lines.map((l) => '<br>' + esc(l)).join('')}<br>Desk electricity: ${fUSD(cost.elec)} at $${fmt(ELEC_PRICE, 2)}/kWh</span></div>`;
+
+  // chart: one typical day for all people
+  const X0 = 56, Wd = 888, bw = Wd / 24;
+  const stacks = []; let maxV = 0;
+  for (let h = 0; h < 24; h++) {
+    const parts = co2 ? [[R.gDesk[h], 'var(--c-desk)'], [R.gLocal[h], 'var(--c-local)'], [R.gDC[h], 'var(--c-dc)'], [R.gEmb[h], 'var(--c-emb)']]
+      : [[R.eDesk[h], 'var(--c-desk)'], [R.eLocal[h], 'var(--c-local)'], [R.eDC[h], 'var(--c-dc)']];
+    parts.forEach((p) => { p[0] *= N; });
+    const tot = parts.reduce((a, p) => a + p[0], 0); maxV = Math.max(maxV, tot); stacks.push(parts);
+  }
+  const top = niceMax(maxV || 1), Y = (v) => 280 - v / top * 256;
+  let svg = `<svg viewBox="0 0 960 400" style="width:100%;height:auto;display:block" role="img" aria-label="Hourly ${co2 ? 'CO2' : 'energy'} of a typical workday">`;
+  svg += `<rect x="${X0 + U.start * bw}" y="24" width="${(U.end - U.start) * bw}" height="256" fill="#E7EFEC"/>`;
+  svg += `<text x="${X0 + U.start * bw}" y="16" font-size="12" fill="#0B5B50">work hours ${hh(U.start)} to ${hh(U.end)}</text>`;
+  for (let i = 0; i <= 4; i++) { const v = top * i / 4; svg += `<line x1="${X0}" x2="${X0 + Wd}" y1="${Y(v)}" y2="${Y(v)}" stroke="${i ? '#DDE3E0' : '#4A5752'}"/><text x="${X0 - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="#4A5752">${i === 0 ? '0' : (co2 ? fG(v) : fWh(v)).replace(' ', '')}</text>`; }
+  stacks.forEach((parts, h) => {
+    let y = 280; const x = X0 + h * bw + 3;
+    parts.forEach(([v, c]) => { if (v <= 0) return; const ht = v / top * 256; y -= ht; svg += `<rect x="${x}" y="${y}" width="${bw - 6}" height="${Math.max(ht, .5)}" fill="${c}"><title>${hh(h)}: ${co2 ? fG(v) : fWh(v)}</title></rect>`; });
+  });
+  svg += `<text x="${X0 - 8}" y="318" text-anchor="end" font-size="11" fill="#4A5752">you</text><text x="${X0 - 8}" y="346" text-anchor="end" font-size="11" fill="#4A5752">cloud</text>`;
+  for (let h = 0; h < 24; h++) {
+    const cu = ci(U.userGrid, h + .5, U.season, U.wind), cc = ci(U.cloud, h + .5, U.season, U.wind);
+    svg += `<rect x="${X0 + h * bw + 1}" y="304" width="${bw - 2}" height="20" rx="3" fill="${ciColor(cu)}"><title>${hh(h)} ${GRIDS[U.userGrid].country}: ${fmt(cu)} g/kWh</title></rect>`;
+    svg += `<rect x="${X0 + h * bw + 1}" y="332" width="${bw - 2}" height="20" rx="3" fill="${ciColor(cc)}"><title>${hh(h)} ${cloudName(U.cloud)}: ${fmt(cc)} g/kWh</title></rect>`;
+  }
+  for (let i = 0; i <= 8; i++) svg += `<text x="${X0 + i * 3 * bw}" y="374" text-anchor="middle" font-size="11" fill="#4A5752">${String(i * 3).padStart(2, '0')}</text>`;
+  svg += `<text x="${X0}" y="394" font-size="11" fill="#4A5752">Colour strips: carbon intensity per hour, light = clean, dark = dirty. Hover a bar or cell for values.</text>`;
+  $('#wChart').innerHTML = svg + '</svg>';
+  $('#wChartTitle').textContent = `A typical workday, hour by hour: ${co2 ? 'CO₂e' : 'energy'}, ${who}`;
+
+  // lineage flow over the window
+  const ciUw = workMeanCI(U.userGrid), ciCw = workMeanCI(U.cloud);
+  $('#wFlowTitle').textContent = `Lineage per ${per}`;
+  let flow = `<div class="dflow"><span class="who">AT YOUR DESK</span>
+    <div class="nd"><b>Power plants</b>${esc(GRIDS[U.userGrid].country)} grid<span class="v">${fmt(ciUw)} g/kWh</span></div><span class="ar">→</span>
+    <div class="nd"><b>${N === 1 ? 'Your device' : fmt(N) + ' devices'}</b>${esc(d.name)}, on ${U.end - U.start} h a day<span class="v">${fWh(R.E.desk * S)}</span></div>`;
+  if (U.mode === 'local') flow += `<span class="ar">→</span><div class="nd"><b>Local AI</b>${esc(lm.name)}, ${fTime(R.localSecs)} of compute per person per day<span class="v">${R.infeasible ? "won't fit" : fWh(R.E.local * S)}</span></div>`;
+  flow += `<span class="ar">→</span><div class="nd"><b>${N === 1 ? 'You' : 'Your people'}</b>${fmt(R.sessions * S)} sessions<span class="v">${fG((R.Gs.desk + R.Gs.local) * S)}</span></div></div>`;
+  if (U.mode === 'cloud') {
+    flow += `<div class="dflow"><span class="who">IN THE CLOUD</span>
+      <div class="nd"><b>Power plants</b>${esc(cloudName(U.cloud))}<span class="v">${fmt(ciCw)} g/kWh</span></div><span class="ar">→</span>
+      <div class="nd"><b>Chips + servers</b>IT energy for ${esc(U.cloudModel)}<span class="v">${fWh(R.eIT * S)}</span></div><span class="ar">→</span>
+      <div class="nd"><b>Cooling + losses</b>PUE ${fmt(GRIDS[U.cloud].pue, 2)}<span class="v">${fWh(R.eOH * S)}</span></div><span class="ar">→</span>
+      <div class="nd"><b>Network</b>to and from you<span class="v">${fWh(R.eNet * S)}</span></div><span class="ar">→</span>
+      <div class="nd"><b>Answers</b>${fmt(U.chats * k * S)} chats, ${fmt(U.agents * k * S)} agent runs<span class="v">${fG(R.Gs.dc * S)}</span></div></div>`;
+  }
+  const devEmbDay = d.emb * 1000 / (4 * 1760) * (U.end - U.start);
+  flow += `<div class="dflow"><span class="who">EMBODIED</span>
+    <div class="nd"><b>Chips + DC buildings</b>${U.mode === 'cloud' ? 'share of making them (CLEER)' : 'none, model runs on your device'}<span class="v">${fG(R.gEmbCloud * S)}</span></div>
+    <div class="nd"><b>${N === 1 ? 'Your device' : 'Your devices'}</b>${U.embodied ? 'manufacturing, spread over 4 years' : 'not counted (toggle in setup)'}<span class="v">${U.embodied ? fG(R.gEmbDev * S) : fG(devEmbDay * S) + ' if counted'}</span></div>
+    <div class="nd"><b>Money</b>${esc(cost.label)}<span class="v">${fUSD(cost.total)}</span></div></div>`;
+  $('#wFlow').innerHTML = flow;
+
+  // split
+  const parts = co2
+    ? [['Devices (on)', R.Gs.desk, 'var(--c-desk)'], ['Local AI', R.Gs.local, 'var(--c-local)'], ['Data center + network', R.Gs.dc, 'var(--c-dc)'], ['Embodied', R.Gs.emb, 'var(--c-emb)']]
+    : [['Devices (on)', R.E.desk, 'var(--c-desk)'], ['Local AI', R.E.local, 'var(--c-local)'], ['Data center + network', R.E.dc, 'var(--c-dc)']];
+  const tot = parts.reduce((a, p) => a + p[1], 0) || 1;
+  $('#wSplitTitle').textContent = `Where the footprint comes from (per ${per})`;
+  $('#wSplit').innerHTML = `<div class="bar" style="height:22px;border-radius:6px">${parts.map((p) => `<i style="width:${p[1] / tot * 100}%;background:${p[2]}"></i>`).join('')}</div>` +
+    parts.filter((p) => p[1] > 0).map((p) => `<div class="row" style="font-size:15px"><span style="display:flex;align-items:center;gap:8px"><i class="sw" style="background:${p[2]}"></i>${p[0]}</span><span class="mono" style="font-weight:600">${co2 ? fG(p[1] * S) : fWh(p[1] * S)} <span style="color:var(--muted);font-weight:400">${fmt(p[1] / tot * 100)}%</span></span></div>`).join('');
+
+  // cloud vs local over the window
+  const cC = costFor(Rc, N, W.days), cL = costFor(Rl, N, W.days);
+  const vmax = Math.max(co2 ? Rc.Gtot : Rc.Etot, Rl.infeasible ? 0 : (co2 ? Rl.Gtot : Rl.Etot), 1e-9);
+  const vrow = (lab, Rx, color, cur, c) => {
+    const v = co2 ? Rx.Gtot : Rx.Etot;
+    return `<div class="stack" style="gap:6px"><div class="row" style="font-size:15px"><span>${lab}${cur ? ' <span class="note">(selected)</span>' : ''}</span><span class="mono" style="font-weight:600">${Rx.infeasible ? "won't fit" : (co2 ? fG(v * S) : fWh(v * S))}</span></div><div class="bar"><i style="width:${Rx.infeasible ? 0 : v / vmax * 100}%;background:${color}"></i></div><div class="note">${co2 ? fWh(Rx.Etot * S) : fG(Rx.Gtot * S)} · AI cost ${fUSD(c.total)} · desk electricity ${fUSD(c.elec)}</div></div>`;
+  };
+  $('#wVsTitle').textContent = `Cloud vs local (per ${per})`;
+  $('#wVs').innerHTML = vrow(`Cloud: ${esc(U.cloudModel)} in ${esc(cloudName(U.cloud))}`, Rc, 'var(--c-dc)', U.mode === 'cloud', cC) +
+    vrow(`Local: ${esc(lm.name)} on ${N === 1 ? 'your device' : 'each device'}`, Rl, 'var(--c-local)', U.mode === 'local', cL) +
+    `<p class="note">Both include devices being on all day. Local models are usually far less capable than frontier cloud models, so the same "session" may not finish the same work.</p>`;
+
+  // insights
+  const ins = [];
+  const big = parts.slice().sort((a, b) => b[1] - a[1])[0];
+  ins.push(`<b>${big[0]}</b> is the biggest part of the ${co2 ? 'carbon' : 'energy'}: ${fmt(big[1] / tot * 100)}%.`);
+  ins.push(`Per ${per}: ${fWh(R.Etot * S)} is about <b>${fmt(R.Etot * S / 170, 0)} km</b> in an electric car, or ${fmt(R.Etot * S / 15, 0)} phone charges.`);
+  if (U.mode === 'cloud') {
+    const ratio = R.E.desk / Math.max(R.E.dc, 1e-9);
+    ins.push(ratio >= 1 ? `The ${esc(d.kind)}s people watch on use <b>${fmt(ratio, 1)}×</b> the energy of all the AI answers in the data center. Screens and devices matter.` : `The data center uses <b>${fmt(1 / ratio, 1)}×</b> the energy of the devices. Agent sessions are the heavy part.`);
+    const alts = AZURE.map((id) => ({ id, r: scaleCloud(simulateDay('cloud', { cloud: id }), k) })).sort((a, b) => a.r.Gs.dc - b.r.Gs.dc);
+    const best = alts[0];
+    if (best.id !== U.cloud && R.Gs.dc > 0) ins.push(`Running ${esc(U.cloudModel)} in <b>Azure ${GRIDS[best.id].azure}</b> instead would cut the cloud CO₂ from ${fG(R.Gs.dc * S)} to ${fG(best.r.Gs.dc * S)} (−${fmt((1 - best.r.Gs.dc / R.Gs.dc) * 100)}%).`);
+    else ins.push(`Your cloud region is already the cleanest of the Azure regions shown.`);
+    if (cost.apiRaw > 0) ins.push(`Prompt caching at ${fmt(U.cacheHit * 100)}% cuts the token bill from ${fUSD(cost.apiRaw)} to ${fUSD(cost.api)}. Cached tokens also skip most of the compute, so real energy is likely a bit lower than shown.`);
+    if (U.costModel === 'claude') ins.push(cost.api > cost.total ? `This usage is worth <b>${fUSD(cost.api)}</b> at API rates against ${fUSD(cost.total)} in subscriptions, so the plan pays off at this intensity (as long as it fits the plan's usage limits).` : `At this usage, API pay-as-you-go (${fUSD(cost.api)}) would be cheaper than the subscriptions (${fUSD(cost.total)}).`);
+    if (!Rl.infeasible) ins.push(`Running ${esc(lm.name)} locally instead would use <b>${fmt(Rl.Etot / R.Etot, 1)}×</b> the energy and ${Rl.Gtot < R.Gtot ? 'emit less' : 'emit more'} CO₂ (${fG(Rl.Gtot * S)} vs ${fG(R.Gtot * S)}), on your home grid.`);
+  } else {
+    if (!R.infeasible) {
+      ins.push(`Each device spends <b>${fTime(R.localSecs)}</b> a day generating at about ${d.load} W. ${R.localSecs / 3600 > (U.end - U.start) ? 'That is longer than the workday, so it keeps running after people stop.' : ''}`);
+      ins.push(`The same usage with ${esc(U.cloudModel)} in ${esc(cloudName(U.cloud))} would use ${fWh(Rc.Etot * S)}, emit ${fG(Rc.Gtot * S)} and cost about ${fUSD(cC.total)}.`);
+    }
+    if (U.userGrid !== 'nlsolar' && GRIDS[U.userGrid].type !== 'Static clean') ins.push(`Local AI follows <b>your</b> grid. Rooftop solar or a clean grid makes local runs much cleaner in daytime.`);
+  }
+  const mba = scaleCloud(simulateDay(U.mode, { device: 'mba' }), k);
+  if (U.device !== 'mba' && !mba.infeasible) ins.push(`On MacBook Airs the device part would be ${fWh(mba.E.desk * S)} instead of ${fWh(R.E.desk * S)}. Efficient devices and screens matter all day, AI or not.`);
+  if (!U.embodied) ins.push(`Making the device${N === 1 ? '' : 's'} would add about <b>${fG(devEmbDay * S)}</b> per ${per} if spread over 4 years. Keeping devices longer is one of the biggest wins.`);
+  $('#wIns').innerHTML = ins.map((s) => `<li><span>${s}</span></li>`).join('');
+}
+function bindWorkday() {
+  $('#wCloudModel').onchange = (e) => { U.cloudModel = e.target.value; renderWorkday(); };
+  $('#wLocalModel').onchange = (e) => { U.localModel = e.target.value; renderWorkday(); };
+  $('#wStart').onchange = (e) => { U.start = Number(e.target.value); renderAll(); };
+  $('#wEnd').onchange = (e) => { U.end = Number(e.target.value); renderAll(); };
+  $('#wChats').oninput = (e) => { U.chats = Number(e.target.value); renderWorkday(); };
+  $('#wAgents').oninput = (e) => { U.agents = Number(e.target.value); renderWorkday(); };
+  $('#wUsers').oninput = (e) => { U.users = USER_STEPS[Number(e.target.value)]; renderWorkday(); };
+  $('#wUsersNum').oninput = (e) => { const v = Math.round(Number(e.target.value)); if (v >= 1 && v <= 100000) { U.users = v; renderWorkday(); } };
+  $('#wClaudePlan').onchange = (e) => { U.claudePlan = e.target.value; renderWorkday(); };
+  $('#wCpPlan').onchange = (e) => { U.cpPlan = e.target.value; renderWorkday(); };
+  $('#wCpBill').onchange = (e) => { U.cpFromBill = e.target.checked; renderWorkday(); };
+  $('#wCpOver').oninput = (e) => { const v = Number(e.target.value); if (v >= 0) { U.cpOverage = v; renderWorkday(); } };
+  $('#uDevice').onchange = (e) => { U.device = e.target.value; renderAll(); };
+  $('#uGrid').onchange = (e) => { U.userGrid = e.target.value; renderAll(); };
+  $('#uCloud').onchange = (e) => { U.cloud = e.target.value; renderAll(); };
+  $('#uEmb').onchange = (e) => { U.embodied = e.target.checked; renderAll(); };
+  $('#uCache').oninput = (e) => { U.cacheHit = Number(e.target.value) / 100; renderAll(); };
+}
+
+function renderAll() { renderSetup(); renderCompare(); renderWorkday(); }
+renderStatic();
+renderGridSim(); bindGridSim();
+bindWorkday();
+renderAll();
+</script>
+</body>
+</html>
